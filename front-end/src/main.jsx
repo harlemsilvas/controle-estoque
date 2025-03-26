@@ -13,7 +13,8 @@ import FamiliaProdutoPage from "./pages/FamiliaProdutoPage";
 import MarcaProdutoPage from "./pages/MarcaProdutoPage";
 import LixeiraProdutos from "./pages/LixeiraProdutos";
 import AlertasHistorico from "./pages/AlertasHistorico";
-import MovimentacaoEstoque from "./pages/MovimentacaoEstoque";
+import NovaMovimentacaoEstoque from "./pages/NovaMovimentacaoEstoque";
+import NotFound from "./components/NotFound";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -27,10 +28,15 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/produto/editar/:id" element={<ProdutoForm />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/familias" element={<FamiliaProdutoPage />} />
+        {/* Nova rota para movimentação de estoque */}
+        <Route
+          path="/estoque/movimentacao"
+          element={<NovaMovimentacaoEstoque />}
+        />
         <Route path="/marcas" element={<MarcaProdutoPage />} />
         <Route path="/produtos/lixeira" element={<LixeiraProdutos />} />
         <Route path="/alertas/historico" element={<AlertasHistorico />} />
-        <Route path="/estoque/movimentacao" element={<MovimentacaoEstoque />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
     <ToastContainer

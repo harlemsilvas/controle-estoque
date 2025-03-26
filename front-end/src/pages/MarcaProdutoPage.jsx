@@ -173,6 +173,7 @@ const MarcaProdutoPage = () => {
             onSave={handleSave}
             onCancel={() => setMode(MODES.LIST)}
             isSubmitting={isSubmitting}
+            isEditing={false}
           />
         )}
 

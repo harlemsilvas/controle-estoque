@@ -1,7 +1,7 @@
 // src/components/FamiliaForm.jsx
 import React, { useState, useEffect } from "react";
 
-const FamiliaForm = ({ familia, onSave, onCancel }) => {
+const FamiliaForm = ({ familia, onSave, onCancel, isEditing, initialData }) => {
   const [formData, setFormData] = useState({
     CODIGO: "",
     DESCRICAO: "",
@@ -22,7 +22,8 @@ const FamiliaForm = ({ familia, onSave, onCancel }) => {
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold text-gray-800">
-          {familia ? "Editar Família" : "Nova Família"}
+          {/* {familia ? "Editar Família" : "Nova Família"} */}
+          {familia ? "Editar Família" : "Nova Família"} {/* Segunda tela */}
         </h2>
         <button
           onClick={onCancel}
@@ -33,24 +34,21 @@ const FamiliaForm = ({ familia, onSave, onCancel }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow">
+        {/* Campo CÓDIGO (visível apenas em edição ou após carregamento) */}
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Código
-            </label>
-            <input
-              type="number"
-              name="CODIGO"
-              value={formData.CODIGO}
-              onChange={(e) =>
-                setFormData({ ...formData, CODIGO: e.target.value })
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-              required
-              disabled={!!familia}
-            />
-          </div>
-
+          {(familia || formData.CODIGO) && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Código
+              </label>
+              <input
+                type="text"
+                value={formData.CODIGO}
+                readOnly
+                className="mt-1 block w-full rounded-md bg-gray-100 border-gray-300 shadow-sm"
+              />
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Descrição *
@@ -79,7 +77,7 @@ const FamiliaForm = ({ familia, onSave, onCancel }) => {
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
-              Salvar
+              {familia ? "Atualizar" : "Salvar"}
             </button>
           </div>
         </div>

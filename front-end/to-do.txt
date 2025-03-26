@@ -14,7 +14,7 @@ Próximos Passos:
 
     Implementar restauração de produtos excluídos (soft delete)
 
-    Criar lixeira virtual para produtos excluídos
+    Criar lixeira virtual para produtos excluídos ******
 
     Adicionar histórico de alterações
 

@@ -78,7 +78,8 @@ app.post("/familia-produto", async (req, res) => {
   try {
     const { CODIGO, DESCRICAO } = req.body;
     const result =
-      await sql.query`INSERT INTO FAMILIA_PRODUTO (CODIGO, DESCRICAO) VALUES (${CODIGO}, ${DESCRICAO})`;
+      // await sql.query`INSERT INTO FAMILIA_PRODUTO (CODIGO, DESCRICAO) VALUES (${CODIGO}, ${DESCRICAO})`;
+      await sql.query`INSERT INTO FAMILIA_PRODUTO (DESCRICAO) VALUES (${DESCRICAO})`;
     res.status(201).send("Registro inserido com sucesso");
   } catch (err) {
     res.status(500).send("Erro ao inserir dados");
@@ -409,13 +410,28 @@ app.get("/familia-produto", async (req, res) => {
   }
 });
 
+// app.post("/familia-produto", async (req, res) => {
+//   try {
+//     const { CODIGO, DESCRICAO } = req.body;
+//     await sql.query`INSERT INTO FAMILIA_PRODUTO (CODIGO, DESCRICAO) VALUES (${CODIGO}, ${DESCRICAO})`;
+//     res.send("Família criada com sucesso");
+//   } catch (err) {
+//     res.status(500).send("Erro ao criar família");
+//   }
+// });
+
 app.post("/familia-produto", async (req, res) => {
   try {
-    const { CODIGO, DESCRICAO } = req.body;
-    await sql.query`INSERT INTO FAMILIA_PRODUTO (CODIGO, DESCRICAO) VALUES (${CODIGO}, ${DESCRICAO})`;
-    res.send("Família criada com sucesso");
+    const { DESCRICAO } = req.body;
+
+    await sql.query`
+      INSERT INTO FAMILIA_PRODUTO (DESCRICAO)
+      VALUES (${DESCRICAO})
+    `;
+
+    res.status(201).json({ success: true });
   } catch (err) {
-    res.status(500).send("Erro ao criar família");
+    res.status(500).json({ error: "Erro ao criar família" });
   }
 });
 
@@ -451,11 +467,11 @@ app.get("/marca-produto", async (req, res) => {
 // Rota POST (Criar)
 app.post("/marca-produto", async (req, res) => {
   try {
-    const { CODIGO, DESCRICAO } = req.body;
+    const { DESCRICAO } = req.body;
     await sql.query`
-      INSERT INTO MARCA_PRODUTO (CODIGO, DESCRICAO)
-      VALUES (${CODIGO}, ${DESCRICAO})
-    `;
+      INSERT INTO MARCA_PRODUTO (DESCRICAO)
+      VALUES (${DESCRICAO})
+      `;
     res.status(201).send("Marca criada com sucesso");
   } catch (err) {
     res
@@ -463,6 +479,8 @@ app.post("/marca-produto", async (req, res) => {
       .send(err.number === 2627 ? "Código já existe" : "Erro ao criar marca");
   }
 });
+// INSERT INTO MARCA_PRODUTO (CODIGO, DESCRICAO)
+// VALUES (${CODIGO}, ${DESCRICAO})
 
 // Rota PUT (Atualizar)
 app.put("/marca-produto/:id", async (req, res) => {
@@ -502,6 +520,8 @@ app.delete("/marca-produto/:id", async (req, res) => {
 app.get("/totais", async (req, res) => {
   try {
     const produtos = await sql.query`SELECT COUNT(*) AS total FROM PRODUTO`;
+    const movimentacoes =
+      await sql.query`SELECT COUNT(*) AS total FROM ESTOQUE_PRODUTO`;
     const marcas = await sql.query`SELECT COUNT(*) AS total FROM MARCA_PRODUTO`;
     const familias =
       await sql.query`SELECT COUNT(*) AS total FROM FAMILIA_PRODUTO`;
@@ -830,5 +850,181 @@ app.post("/estoque/movimentacao", async (req, res) => {
   } catch (err) {
     await transaction.rollback();
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Buscar produtos por vários critérios
+app.get("/produtos/busca", async (req, res) => {
+  try {
+    const termo = req.query.termo;
+    const result = await sql.query`
+      SELECT 
+        p.CODIGO,
+        p.CODIGO_BARRAS AS EAN,
+        p.DESCRICAO,
+        p.ESTOQUE_ATUAL,
+        m.DESCRICAO AS MARCA,
+        f.DESCRICAO AS FAMILIA
+      FROM PRODUTO p
+      LEFT JOIN MARCA_PRODUTO m ON p.CODIGO_MARCA = m.CODIGO
+      LEFT JOIN FAMILIA_PRODUTO f ON p.CODIGO_FAMILIA = f.CODIGO
+      WHERE 
+        p.CODIGO_BARRAS LIKE '%${termo}%' OR
+        p.CODIGO LIKE '%${termo}%' OR
+        p.DESCRICAO LIKE '%${termo}%'
+    `;
+
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: "Erro na busca de produtos" });
+  }
+});
+
+// Registrar movimentação com log
+app.post("/estoque/movimentar", async (req, res) => {
+  const transaction = new sql.Transaction();
+
+  try {
+    const { codigoProduto, tipo, quantidade, usuario } = req.body;
+
+    await transaction.begin();
+
+    // 1. Buscar estoque atual
+    const produto = await transaction.request().query`
+      SELECT ESTOQUE_ATUAL FROM PRODUTO WHERE CODIGO = ${codigoProduto}
+    `;
+
+    if (produto.recordset.length === 0) {
+      throw new Error("Produto não encontrado");
+    }
+
+    const estoqueAtual = produto.recordset[0].ESTOQUE_ATUAL;
+    let novoEstoque = estoqueAtual;
+
+    // 2. Calcular novo estoque
+    switch (tipo) {
+      case "E":
+        novoEstoque += quantidade;
+        break;
+      case "S":
+        novoEstoque -= quantidade;
+        break;
+      case "I":
+        novoEstoque = quantidade;
+        break;
+      default:
+        throw new Error("Tipo de movimentação inválido");
+    }
+
+    // 3. Atualizar estoque
+    await transaction.request().query`
+      UPDATE PRODUTO SET
+        ESTOQUE_ATUAL = ${novoEstoque}
+      WHERE CODIGO = ${codigoProduto}
+    `;
+
+    // 4. Registrar histórico
+    await transaction.request().query`
+      INSERT INTO ESTOQUE_PRODUTO (
+        CODIGO_PRODUTO, TIPO_LANCAMENTO, QUANTIDADE, DATA, USUARIO
+      ) VALUES (
+        ${codigoProduto}, ${tipo}, ${quantidade}, GETDATE(), ${usuario}
+      )
+    `;
+
+    await transaction.commit();
+
+    // Log detalhado
+    console.log(`
+      Movimentação registrada:
+      Produto: ${codigoProduto}
+      Tipo: ${tipo}
+      Quantidade: ${quantidade}
+      Estoque Anterior: ${estoqueAtual}
+      Novo Estoque: ${novoEstoque}
+      Usuário: ${usuario}
+    `);
+
+    res.json({ success: true, estoqueAnterior: estoqueAtual, novoEstoque });
+  } catch (err) {
+    await transaction.rollback();
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// app.get("/familia-produto/ultimo-codigo", async (req, res) => {
+//   try {
+//     const result = await sql.query`
+//         SELECT MAX(CAST(CODIGO AS INT)) AS ultimoCodigo FROM FAMILIA_PRODUTO
+//     `;
+
+//     // Corrigindo conversão para número
+//     const ultimoCodigo = Number(result.recordset[0].ultimoCodigo) || 0;
+
+//     //res.json({ proximoCodigo: ultimoCodigo + 1 });
+//     const proximoCodigo = ultimoCodigo + 1;
+
+//     console.log("Último código do banco:", result.recordset[0].ultimoCodigo);
+//     console.log("Próximo código calculado:", ultimoCodigo + 1);
+//     console.log("Próximo código gerado:", proximoCodigo); // Para depuração
+//     res.json({ proximoCodigo });
+//   } catch (err) {
+//     res.status(500).json({ error: "Erro ao buscar último código" });
+//   }
+// });
+
+// app.get("/familia-produto/ultimo-codigo", async (req, res) => {
+//   try {
+//     const result = await sql.query`
+//       SELECT MAX(CODIGO) AS ultimoCodigo FROM FAMILIA_PRODUTO
+//     `;
+
+//     const ultimoCodigo = result.recordset[0].ultimoCodigo || 0;
+//     // console.log("🚀 ~ app.get ~ ultimoCodigo:", ultimoCodigo);
+//     res.json({ proximoCodigo: ultimoCodigo + 1 });
+//   } catch (err) {
+//     res.status(500).json({ error: "Erro ao buscar último código" });
+//   }
+// });
+
+// Rota para obter último código
+app.get("/marca/ultimo-codigo", async (req, res) => {
+  try {
+    const result = await sql.query`
+      SELECT MAX(CODIGO) AS ultimoCodigo FROM MARCA
+    `;
+    const ultimoCodigo = Number(result.recordset[0].ultimoCodigo) || 0;
+    res.json({ proximoCodigo: ultimoCodigo + 1 });
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar último código" });
+  }
+});
+
+// Rota para criar/atualizar
+app.post("/marca", async (req, res) => {
+  try {
+    const { DESCRICAO } = req.body;
+    await sql.query`
+      INSERT INTO MARCA (DESCRICAO)
+      VALUES (${DESCRICAO})
+    `;
+    res.status(201).json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao criar marca" });
+  }
+});
+
+app.put("/marca/:codigo", async (req, res) => {
+  try {
+    const { codigo } = req.params;
+    const { DESCRICAO } = req.body;
+    await sql.query`
+      UPDATE MARCA
+      SET DESCRICAO = ${DESCRICAO}
+      WHERE CODIGO = ${codigo}
+    `;
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao atualizar marca" });
   }
 });

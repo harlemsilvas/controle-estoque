@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import { getTotais } from "../services/api";
 import { toastError } from "../services/toast";
-import { CubeIcon, TagIcon, FolderIcon } from "@heroicons/react/24/outline";
 
 const Home = () => {
   const [totais, setTotais] = useState({});
@@ -15,7 +14,7 @@ const Home = () => {
         const data = await getTotais();
         setTotais(data);
       } catch (error) {
-        toastError(error.message);
+        toastError("Erro ao carregar dados iniciais");
       } finally {
         setLoading(false);
       }
@@ -23,58 +22,126 @@ const Home = () => {
     loadTotais();
   }, []);
 
-  // useEffect(() => {
-  //   const interval = setInterval(loadTotais, 300000); // Atualiza a cada 5 minutos
-  //   return () => clearInterval(interval);
-  // }, []);
-
-  const MetricCard = ({ title, value, color, link }) => (
+  const MetricCard = ({ title, value, color, link, icon }) => (
     <div
       className={`bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow ${
         loading ? "animate-pulse" : ""
       }`}
     >
-      <h2 className="text-2xl font-semibold text-gray-800 mb-2">{title}</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
+        <div className={`p-3 rounded-lg ${color} bg-opacity-20`}>{icon}</div>
+      </div>
       <div className="flex items-baseline justify-between">
         <div>
-          <span className={`text-4xl font-bold ${color}`}>
+          <span className={`text-3xl font-bold ${color}`}>
             {loading ? "--" : value}
           </span>
-          <span className="text-gray-500 ml-2">registros</span>
         </div>
         <Link
           to={link}
           className={`text-sm ${color} hover:opacity-80 transition-opacity`}
         >
-          Ver todos →
+          Gerenciar →
         </Link>
       </div>
     </div>
   );
 
+  // Ícones SVG
+  const icons = {
+    produto: (
+      <svg
+        className="w-6 h-6 text-blue-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+        />
+      </svg>
+    ),
+    movimentacao: (
+      <svg
+        className="w-6 h-6 text-orange-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+        />
+      </svg>
+    ),
+    marca: (
+      <svg
+        className="w-6 h-6 text-green-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+    ),
+    familia: (
+      <svg
+        className="w-6 h-6 text-purple-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+        />
+      </svg>
+    ),
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <div className="container mx-auto px-6 py-12">
+      <div className="container mx-auto px-6 py-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-800 mb-4">
-            Visão Geral do Estoque
+            Sistema de Gestão de Estoque
           </h1>
-
           <p className="text-xl text-gray-600">
-            Dados atualizados em tempo real
+            Controle completo do seu inventário
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-          {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12"> */}
-          {/* Cards existentes... */}
+        {/* Seção de Métricas Principais */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <MetricCard
             title="Produtos"
             value={totais.produtos}
             color="text-blue-600"
             link="/produtos"
+            icon={icons.produto}
+          />
+
+          <MetricCard
+            title="Movimentações"
+            value={totais.movimentacoes || "--"}
+            color="text-orange-600"
+            link="/estoque/movimentacao"
+            icon={icons.movimentacao}
           />
 
           <MetricCard
@@ -82,6 +149,7 @@ const Home = () => {
             value={totais.marcas}
             color="text-green-600"
             link="/marcas"
+            icon={icons.marca}
           />
 
           <MetricCard
@@ -89,51 +157,14 @@ const Home = () => {
             value={totais.familias}
             color="text-purple-600"
             link="/familias"
+            icon={icons.familia}
           />
-
-          <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-800">
-                Movimentações
-              </h2>
-              <div className="bg-orange-100 p-2 rounded-lg">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6 text-orange-600"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-                  <path
-                    fillRule="evenodd"
-                    d="M3 4a1 1 0 00-1 1v8a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zm11 3a1 1 0 01-1-1V5h1.5a1 1 0 01.8.4l.975 1.3a.5.5 0 01.025.6H14z"
-                    clipRule="evenodd"
-                  />
-                  <path
-                    fillRule="evenodd"
-                    d="M16 5a1 1 0 00-1-1h-1.5a1 1 0 00-.8.4l-.975 1.3a.5.5 0 00-.025.6H14a1 1 0 001 1h.5v5h-.025a.5.5 0 00-.025.6l.975 1.3a1 1 0 00.8.4H15a1 1 0 001-1V5z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-            </div>
-            <p className="text-gray-600 mt-4">Controle de entradas e saídas</p>
-            <Link
-              to="/estoque/movimentacao"
-              className="inline-block w-full mt-6 text-center bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition"
-            >
-              Acessar
-            </Link>
-          </div>
-          {/* </div> */}
         </div>
 
-        {/* Seção de Ações Rápidas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">
-              Ações Rápidas
-            </h3>
+        {/* Seção de Acesso Rápido */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">Ações Rápidas</h2>
             <div className="space-y-3">
               <Link
                 to="/produto/novo"
@@ -142,29 +173,27 @@ const Home = () => {
                 + Novo Produto
               </Link>
               <Link
-                to="/marca/novo"
-                className="block p-3 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition"
-              >
-                + Nova Marca
-              </Link>
-              <Link
-                to="/familia/novo"
-                className="block p-3 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition"
-              >
-                + Nova Família
-              </Link>
-              <Link
                 to="/estoque/movimentacao"
-                //   className="block p-3 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition"
-                // >
-                className="inline-block w-full mt-6 text-center bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition"
+                className="block p-3 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition"
               >
-                + Movimentação de estoque
+                Nova Movimentação
+              </Link>
+              <Link
+                to="/relatorios"
+                className="block p-3 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition"
+              >
+                Gerar Relatórios
               </Link>
             </div>
           </div>
 
-          {/* Adicione mais seções aqui se necessário */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">Últimas Atividades</h2>
+            <div className="text-gray-500">
+              {/* Espaço para implementar feed de atividades posteriormente */}
+              <p className="p-3">Módulo em desenvolvimento</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -172,10 +201,3 @@ const Home = () => {
 };
 
 export default Home;
-
-// Dentro do MetricCard, antes do título:
-{
-  /* <div className="mb-3">
-  <CubeIcon className="h-8 w-8 text-blue-500" />
-</div> */
-}

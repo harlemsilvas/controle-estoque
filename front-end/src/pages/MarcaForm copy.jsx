@@ -1,17 +1,13 @@
-// src/components/MarcaForm.jsx
 import React, { useState, useEffect } from "react";
 
-const MarcaForm = ({ marca, onSave, onCancel, isEditing, initialData }) => {
+const MarcaForm = ({ marca, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
-    CODIGO: initialData?.CODIGO || "",
-    DESCRICAO: initialData?.DESCRICAO || "",
+    CODIGO: "",
+    DESCRICAO: "",
   });
-  const [loadingCodigo, setLoadingCodigo] = useState(!isEditing); // Só carrega código em modo novo
 
   useEffect(() => {
-    if (marca) {
-      setFormData(marca);
-    }
+    if (marca) setFormData(marca);
   }, [marca]);
 
   const handleSubmit = (e) => {
@@ -23,7 +19,7 @@ const MarcaForm = ({ marca, onSave, onCancel, isEditing, initialData }) => {
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold text-gray-800">
-          {marca ? "Editar Marca" : "Nova Marca"} {/* Segunda tela */}
+          {marca ? "Editar Marca" : "Nova Marca"}
         </h2>
         <button
           onClick={onCancel}
@@ -34,21 +30,24 @@ const MarcaForm = ({ marca, onSave, onCancel, isEditing, initialData }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow">
-        {/* Campo CÓDIGO (visível apenas em edição ou após carregamento) */}
         <div className="space-y-4">
-          {(marca || formData.CODIGO) && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Código
-              </label>
-              <input
-                type="text"
-                value={formData.CODIGO}
-                readOnly
-                className="mt-1 block w-full rounded-md bg-gray-100 border-gray-300 shadow-sm"
-              />
-            </div>
-          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Código *
+            </label>
+            <input
+              type="number"
+              name="CODIGO"
+              value={formData.CODIGO}
+              onChange={(e) =>
+                setFormData({ ...formData, CODIGO: e.target.value })
+              }
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              required
+              disabled={!!marca}
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Descrição *
@@ -77,7 +76,7 @@ const MarcaForm = ({ marca, onSave, onCancel, isEditing, initialData }) => {
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
-              {marca ? "Atualizar" : "Salvar"}
+              Salvar
             </button>
           </div>
         </div>

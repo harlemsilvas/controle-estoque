@@ -82,7 +82,7 @@ app.post("/familia-produto", async (req, res) => {
       await sql.query`INSERT INTO FAMILIA_PRODUTO (DESCRICAO) VALUES (${DESCRICAO})`;
     res.status(201).send("Registro inserido com sucesso");
   } catch (err) {
-    res.status(500).send("Erro ao inserir dados");
+    res.status(500).send("Erro ao cadastrar Família");
   }
 });
 
@@ -93,7 +93,7 @@ app.get("/marca-produto", async (req, res) => {
       await sql.query`SELECT * FROM MARCA_PRODUTO ORDER BY DESCRICAO`;
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).send("Erro ao buscar dados");
+    res.status(500).send("Erro ao buscar Marcas");
   }
 });
 
@@ -101,10 +101,11 @@ app.post("/marca-produto", async (req, res) => {
   try {
     const { CODIGO, DESCRICAO } = req.body;
     const result =
-      await sql.query`INSERT INTO MARCA_PRODUTO (CODIGO, DESCRICAO) VALUES (${CODIGO}, ${DESCRICAO})`;
+      await sql.query`INSERT INTO MARCA_PRODUTO (DESCRICAO) VALUES (${DESCRICAO})`;
+    // await sql.query`INSERT INTO MARCA_PRODUTO (CODIGO, DESCRICAO) VALUES (${CODIGO}, ${DESCRICAO})`;
     res.status(201).send("Registro inserido com sucesso");
   } catch (err) {
-    res.status(500).send("Erro ao inserir dados");
+    res.status(500).send("Erro ao inserir Marca");
   }
 });
 
@@ -114,7 +115,7 @@ app.get("/produto", async (req, res) => {
     const result = await sql.query`SELECT * FROM PRODUTO`;
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).send("Erro ao buscar dados");
+    res.status(500).send("Erro ao buscar produtos");
   }
 });
 
@@ -134,7 +135,7 @@ app.post("/produto", async (req, res) => {
       await sql.query`INSERT INTO PRODUTO (CODIGO, CODIGO_INTERNO, DESCRICAO, CODIGO_BARRAS, ESTOQUE_MINIMO, ESTOQUE_ATUAL, CODIGO_MARCA, CODIGO_FAMILIA) VALUES (${CODIGO}, ${CODIGO_INTERNO}, ${DESCRICAO}, ${CODIGO_BARRAS}, ${ESTOQUE_MINIMO}, ${ESTOQUE_ATUAL}, ${CODIGO_MARCA}, ${CODIGO_FAMILIA})`;
     res.status(201).send("Registro inserido com sucesso");
   } catch (err) {
-    res.status(500).send("Erro ao inserir dados");
+    res.status(500).send("Erro ao inserir Produto");
   }
 });
 

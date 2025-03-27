@@ -260,17 +260,17 @@ export const getHistoricoEstoque = async (barcode) => {
   return response.data;
 };
 
-// export const registrarMovimentacao = async (data) => {
-//   const response = await api.post("/estoque/movimentacao", data);
-//   return response.data;
-// };
+export const registrarMovimentacao = async (data) => {
+  const response = await api.post("/estoque/movimentacao", data);
+  return response.data;
+};
 
 export const buscarProdutos = async (termo) => {
   const response = await api.get("/produtos/busca", { params: { termo } });
   return response.data;
 };
 
-export const registrarMovimentacao = async (dados) => {
-  const response = await api.post("/estoque/movimentar", dados);
-  return response.data;
-};
+// export const registrarMovimentacao = async (dados) => {
+//   const response = await api.post("/estoque/movimentar", dados);
+//   return response.data;
+// };

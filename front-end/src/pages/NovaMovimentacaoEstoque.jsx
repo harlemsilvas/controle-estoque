@@ -31,7 +31,7 @@ const NovaMovimentacaoEstoque = () => {
       });
 
       toastSuccess(`
-        Movimentação registrada! 
+        Movimentação registrada!
         Estoque anterior: ${response.estoqueAnterior}
         Novo estoque: ${response.novoEstoque}
       `);

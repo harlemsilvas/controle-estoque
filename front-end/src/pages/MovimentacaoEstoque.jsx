@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { toastSuccess, toastError } from "../services/toast";
 import Header from "../components/Header";
 import {
@@ -29,7 +29,7 @@ const MovimentacaoEstoque = () => {
       setProduto(null);
     }
     // console.log("🚀 ~ buscarProduto ~ data:", data);
-    console.log("🚀 ~ buscarProduto ~ error.message:", error.message);
+    // console.log("🚀 ~ buscarProduto ~ error.message:", error.message);
   };
 
   const handleSubmit = async (e) => {

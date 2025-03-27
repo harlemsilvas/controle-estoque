@@ -1,0 +1,148 @@
+CREATE TABLE FAMILIA_PRODUTO_NOVA (
+    CODIGO INT IDENTITY(1,1) PRIMARY KEY,
+    DESCRICAO VARCHAR(255) NOT NULL
+    -- Outras colunas...
+);
+
+-- 2. Copiar dados da tabela antiga para a nova
+INSERT INTO FAMILIA_PRODUTO_NOVA (DESCRICAO)
+SELECT DESCRICAO FROM FAMILIA_PRODUTO;
+
+-- 3. Excluir tabela antiga
+DROP TABLE FAMILIA_PRODUTO;
+
+-- 4. Renomear a nova tabela
+EXEC sp_rename 'FAMILIA_PRODUTO_NOVA', 'FAMILIA_PRODUTO';
+
+
+
+-- tabela ESTOQUE_PRODUTO
+
+-- PASSO 1: Criar nova tabela temporária com auto-incremento
+USE [HRM]
+GO
+
+-- PASSO 1: Criar tabela temporária com auto-incremento
+CREATE TABLE [dbo].[ESTOQUE_PRODUTO_TEMP](
+    [CODIGO] INT IDENTITY(1,1) NOT NULL,
+    [CODIGO_PRODUTO] [int] NOT NULL,
+    [TIPO_LANCAMENTO] [char](1) NOT NULL,
+    [QUANTIDADE] [int] NOT NULL,
+    [DATA] [datetime] NULL,
+    [TAG] [varchar](10) NULL,
+    [USUARIO] [varchar](10) NULL,
+    CONSTRAINT [PK_ESTOQUE_PRODUTO_CODIGO_TEMP] PRIMARY KEY CLUSTERED ([CODIGO] ASC) -- Nome temporário para PK
+) ON [PRIMARY]
+GO
+
+-- PASSO 2: Adicionar restrições à tabela temporária (com nomes temporários)
+
+-- A. Default para USUARIO (nome temporário)
+ALTER TABLE [dbo].[ESTOQUE_PRODUTO_TEMP] 
+ADD CONSTRAINT [DF_ESTOQUE_PRODUTO_USUARIO_TEMP] DEFAULT ('HRM') FOR [USUARIO]
+GO
+
+-- B. Foreign Key para CODIGO_PRODUTO (nome temporário)
+ALTER TABLE [dbo].[ESTOQUE_PRODUTO_TEMP] 
+WITH CHECK ADD CONSTRAINT [FK_ESTOQUE_PRODUTO_TEMP] 
+FOREIGN KEY([CODIGO_PRODUTO]) REFERENCES [dbo].[PRODUTO] ([CODIGO])
+GO
+
+-- PASSO 3: Migrar dados da tabela antiga para a nova
+SET IDENTITY_INSERT [dbo].[ESTOQUE_PRODUTO_TEMP] ON
+GO
+
+INSERT INTO [dbo].[ESTOQUE_PRODUTO_TEMP] (
+    [CODIGO],
+    [CODIGO_PRODUTO],
+    [TIPO_LANCAMENTO],
+    [QUANTIDADE],
+    [DATA],
+    [TAG],
+    [USUARIO]
+)
+SELECT 
+    [CODIGO],
+    [CODIGO_PRODUTO],
+    [TIPO_LANCAMENTO],
+    [QUANTIDADE],
+    [DATA],
+    [TAG],
+    [USUARIO]
+FROM [dbo].[ESTOQUE_PRODUTO]
+GO
+
+SET IDENTITY_INSERT [dbo].[ESTOQUE_PRODUTO_TEMP] OFF
+GO
+
+-- PASSO 4: Ajustar o auto-incremento
+DECLARE @max_codigo INT
+SELECT @max_codigo = ISNULL(MAX(CODIGO), 0) FROM [dbo].[ESTOQUE_PRODUTO_TEMP]
+DBCC CHECKIDENT ('[dbo].[ESTOQUE_PRODUTO_TEMP]', RESEED, @max_codigo)
+GO
+
+-- PASSO 5: Excluir a tabela original e renomear a temporária
+DROP TABLE [dbo].[ESTOQUE_PRODUTO]
+GO
+
+EXEC sp_rename 'ESTOQUE_PRODUTO_TEMP', 'ESTOQUE_PRODUTO'
+GO
+
+-- PASSO 6: Renomear constraints para os nomes originais (opcional)
+-- A. Renomear PK
+EXEC sp_rename 
+    @objname = 'PK_ESTOQUE_PRODUTO_CODIGO_TEMP', 
+    @newname = 'PK_ESTOQUE_PRODUTO_CODIGO', 
+    @objtype = 'OBJECT'
+GO
+
+-- B. Renomear Default
+EXEC sp_rename 
+    @objname = 'DF_ESTOQUE_PRODUTO_USUARIO_TEMP', 
+    @newname = 'DF_ESTOQUE_PRODUTO_USUARIO', 
+    @objtype = 'OBJECT'
+GO
+
+-- C. Renomear FK
+EXEC sp_rename 
+    @objname = 'FK_ESTOQUE_PRODUTO_TEMP', 
+    @newname = 'FK_ESTOQUE_PRODUTO', 
+    @objtype = 'OBJECT'
+GO
+
+
+-- TABELA ORIGINAL SEGUE A ESTRUTURA A SEGUIR 
+USE [HRM]
+GO
+
+/****** Object:  Table [dbo].[ESTOQUE_PRODUTO]    Script Date: 26/03/2025 20:37:21 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[ESTOQUE_PRODUTO](
+	[CODIGO] [int] NOT NULL,
+	[CODIGO_PRODUTO] [int] NOT NULL,
+	[TIPO_LANCAMENTO] [char](1) NOT NULL,
+	[QUANTIDADE] [int] NOT NULL,
+	[DATA] [datetime] NULL,
+	[TAG] [varchar](10) NULL,
+	[USUARIO] [varchar](10) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[CODIGO] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+ALTER TABLE [dbo].[ESTOQUE_PRODUTO] ADD  CONSTRAINT [DF_ESTOQUE_PRODUTO_USUARIO]  DEFAULT ('HRM') FOR [USUARIO]
+GO
+
+ALTER TABLE [dbo].[ESTOQUE_PRODUTO]  WITH CHECK ADD  CONSTRAINT [FK_ESTOQUE_PRODUTO] FOREIGN KEY([CODIGO_PRODUTO])
+REFERENCES [dbo].[PRODUTO] ([CODIGO])
+GO
+
+ALTER TABLE [dbo].[ESTOQUE_PRODUTO] CHECK CONSTRAINT [FK_ESTOQUE_PRODUTO]
+GO

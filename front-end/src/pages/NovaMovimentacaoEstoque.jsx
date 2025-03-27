@@ -13,12 +13,29 @@ const NovaMovimentacaoEstoque = () => {
     usuario: "ADMIN", // Substituir por usuário logado
   });
 
+  // const handleBusca = async () => {
+  //   try {
+  //     const data = await buscarProdutos(termoBusca);
+  //     setResultados(data);
+  //   } catch (error) {
+  //     toastError(error.message || "Erro na busca de produtos");
+  //   }
+  // };
+  // components/NovaMovimentacaoEstoque.js
   const handleBusca = async () => {
     try {
-      const data = await buscarProdutos(termoBusca);
+      const termoTratado = termoBusca.trim().replace(/\s+/g, " "); // Remove espaços extras
+      const termoCodificado = encodeURIComponent(termoTratado); // Codifica caracteres especiais
+
+      if (!termoTratado) {
+        toastError("Digite um critério de busca");
+        return;
+      }
+
+      const data = await buscarProdutos(termoCodificado);
       setResultados(data);
     } catch (error) {
-      toastError("Erro na busca de produtos");
+      toastError(error.message);
     }
   };
 

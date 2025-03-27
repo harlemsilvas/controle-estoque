@@ -260,17 +260,33 @@ export const getHistoricoEstoque = async (barcode) => {
   return response.data;
 };
 
-export const registrarMovimentacao = async (data) => {
-  const response = await api.post("/estoque/movimentacao", data);
-  return response.data;
-};
-
-export const buscarProdutos = async (termo) => {
-  const response = await api.get("/produtos/busca", { params: { termo } });
-  return response.data;
-};
-
-// export const registrarMovimentacao = async (dados) => {
-//   const response = await api.post("/estoque/movimentar", dados);
+// export const registrarMovimentacao = async (data) => {
+//   const response = await api.post("/estoque/movimentacao", data);
 //   return response.data;
 // };
+
+// export const buscarProdutos = async (termo) => {
+//   const response = await api.get(`/produtos/busca/${termo}`, {
+//     params: { termo },
+//   });
+//   return response.data;
+// };
+
+// services/api.js
+export const buscarProdutos = async (termo) => {
+  try {
+    const response = await api.get("/produtos/busca", {
+      params: {
+        termo: termo || "", // Parâmetro deve ser "termo", não "search"
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.error || "Erro na busca");
+  }
+};
+
+export const registrarMovimentacao = async (data) => {
+  const response = await api.post("/estoque/movimentar", data);
+  return response.data;
+};

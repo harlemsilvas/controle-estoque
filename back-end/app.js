@@ -854,10 +854,39 @@ app.post("/estoque/movimentacao", async (req, res) => {
   }
 });
 
-// Buscar produtos por vários critérios
+// // Buscar produtos por vários critérios
+// app.get("/produtos/busca", async (req, res) => {
+//   try {
+//     const termo = req.query.termo;
+//     const result = await sql.query`
+//       SELECT
+//         p.CODIGO,
+//         p.CODIGO_BARRAS AS EAN,
+//         p.DESCRICAO,
+//         p.ESTOQUE_ATUAL,
+//         m.DESCRICAO AS MARCA,
+//         f.DESCRICAO AS FAMILIA
+//       FROM PRODUTO p
+//       LEFT JOIN MARCA_PRODUTO m ON p.CODIGO_MARCA = m.CODIGO
+//       LEFT JOIN FAMILIA_PRODUTO f ON p.CODIGO_FAMILIA = f.CODIGO
+//       WHERE
+//         p.CODIGO_BARRAS LIKE '%${termo}%' OR
+//         p.CODIGO LIKE '%${termo}%' OR
+//         p.DESCRICAO LIKE '%${termo}%'
+//     `;
+
+//     res.json(result.recordset);
+//   } catch (err) {
+//     res.status(500).json({ error: "Erro na busca de produtos" });
+//   }
+// });
+
+// Backend (Node.js)
 app.get("/produtos/busca", async (req, res) => {
   try {
-    const termo = req.query.termo;
+    const termo = req.query.termo || "";
+    const searchTerm = `%${termo}%`; // Adiciona % para busca parcial
+
     const result = await sql.query`
       SELECT 
         p.CODIGO,
@@ -870,13 +899,14 @@ app.get("/produtos/busca", async (req, res) => {
       LEFT JOIN MARCA_PRODUTO m ON p.CODIGO_MARCA = m.CODIGO
       LEFT JOIN FAMILIA_PRODUTO f ON p.CODIGO_FAMILIA = f.CODIGO
       WHERE 
-        p.CODIGO_BARRAS LIKE '%${termo}%' OR
-        p.CODIGO LIKE '%${termo}%' OR
-        p.DESCRICAO LIKE '%${termo}%'
+        p.CODIGO_BARRAS LIKE ${searchTerm} OR
+        p.CODIGO LIKE ${searchTerm} OR
+        p.DESCRICAO LIKE ${searchTerm}
     `;
 
     res.json(result.recordset);
   } catch (err) {
+    console.error("Erro na busca:", err); // Log detalhado
     res.status(500).json({ error: "Erro na busca de produtos" });
   }
 });

@@ -7,6 +7,7 @@ import {
   getFamilias,
   createProduto,
   updateProduto,
+  api,
 } from "../services/api";
 import { toastSuccess, toastError } from "../services/toast";
 
@@ -21,10 +22,13 @@ const ProdutoForm = () => {
     ESTOQUE_ATUAL: 0,
     CODIGO_MARCA: "",
     CODIGO_FAMILIA: "",
+    VALOR_UNITARIO: 0,
+    COD_FORNECEDOR: "",
   });
   const [marcas, setMarcas] = useState([]);
   const [familias, setFamilias] = useState([]);
   const [loading, setLoading] = useState(!!id);
+  const [fornecedores, setFornecedores] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,6 +41,7 @@ const ProdutoForm = () => {
       // Se for edição, carregar dados do produto
       if (id) {
         const produtoData = await getProdutoById(id);
+        // console.log("Dados do produto:", produtoData); // Verifique se os campos estão presentes
         setFormData(produtoData);
         setLoading(false);
       }
@@ -44,11 +49,23 @@ const ProdutoForm = () => {
     fetchData();
   }, [id]);
 
+  // Buscar fornecedores ao montar o componente
+  useEffect(() => {
+    const buscarFornecedores = async () => {
+      const response = await api.get("/fornecedores");
+      // console.log("🚀 ~ buscarFornecedores ~ response:", response);
+      setFornecedores(response.data);
+    };
+    buscarFornecedores();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (id) {
         await updateProduto(id, formData);
+        // toastSuccess(formData.COD_FORNECEDOR);
+        // toastSuccess(formData.VALOR_UNITARIO);
         toastSuccess("Produto atualizado com sucesso!");
       } else {
         await createProduto(formData);
@@ -170,6 +187,82 @@ const ProdutoForm = () => {
                   min="0"
                 />
               </div>
+
+              {/* inserir novos campos */}
+              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-gray-700 mb-2">
+                    Valor Unitário (R$)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name='VALOR_UNITARIO'
+                    required
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        VALOR_UNITARIO: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label>Fornecedor</label>
+                  <select
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        COD_FORNECEDOR: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Selecione...</option>
+                    {fornecedores.map((fornecedor) => (
+                      <option key={fornecedor.CODIGO} value={fornecedor.CODIGO}>
+                        {fornecedor.NOME}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div> */}
+
+              {/* Campo VALOR_UNITARIO */}
+              <div>
+                <label className="block text-gray-700 mb-2">
+                  Valor Unitário (R$)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="VALOR_UNITARIO" // Adicione o name
+                  value={formData.VALOR_UNITARIO} // Corrija o value
+                  onChange={handleChange} // Use handleChange
+                  className="w-full px-4 py-2 border rounded-lg"
+                  required
+                />
+              </div>
+
+              {/* Campo COD_FORNECEDOR */}
+              <div>
+                <label className="block text-gray-700 mb-2">Fornecedor</label>
+                <select
+                  name="COD_FORNECEDOR" // Adicione o name
+                  value={formData.COD_FORNECEDOR} // Vincule ao estado
+                  onChange={handleChange} // Use handleChange
+                  className="w-full px-4 py-2 border rounded-lg"
+                >
+                  <option value="">Selecione...</option>
+                  {fornecedores.map((fornecedor) => (
+                    <option key={fornecedor.CODIGO} value={fornecedor.CODIGO}>
+                      {fornecedor.NOME}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* fim novos campos */}
 
               <div>
                 <label className="block text-gray-700 mb-2">

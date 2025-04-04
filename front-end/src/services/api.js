@@ -1,8 +1,49 @@
 import axios from "axios";
 
-const api = axios.create({
-  baseURL: "http://localhost:3000", // URL do back-end
+export const api = axios.create({
+  baseURL: "http://localhost:3000", // URL do backend
+  headers: { "Content-Type": "application/json" },
 });
+
+// const api = axios.create({
+//   baseURL: "http://localhost:3000", // URL do back-end
+// });
+
+// Função para obter totais
+export const getTotais = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Token não encontrado.");
+
+    const response = await api.get("/totais", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.message || "Erro ao buscar totais.");
+  }
+};
+// export const getTotais = async () => {
+//   try {
+//     const token = localStorage.getItem("token");
+//     const response = await api.get("/totais", {
+//       headers: { Authorization: `Bearer ${token}` },
+//     });
+//     return response.data;
+//   } catch (error) {
+//     throw new Error("Erro ao buscar totais.");
+//   }
+// };
+
+// Função para obter totais
+// export const getTotais = async () => {
+//   try {
+//     const response = await api.get("/totais");
+//     return response.data;
+//   } catch (error) {
+//     throw new Error("Erro ao buscar totais.");
+//   }
+// };
 
 export const getProdutos = async () => {
   const response = await api.get("/produto");
@@ -179,18 +220,6 @@ export const updateMarca = async (id, marca) => {
   return response.data;
 };
 
-// Totais da pagina principal
-export const getTotais = async () => {
-  try {
-    const response = await api.get("/totais");
-    return response.data;
-  } catch (error) {
-    throw new Error(
-      error.response?.data?.error || "Erro ao carregar estatísticas"
-    );
-  }
-};
-
 export const getProdutosLixeira = async () => {
   const response = await api.get("/produtos/lixeira");
   return response.data;
@@ -288,5 +317,26 @@ export const buscarProdutos = async (termo) => {
 
 export const registrarMovimentacao = async (data) => {
   const response = await api.post("/estoque/movimentar", data);
+  return response.data;
+};
+
+//Fornecedores
+export const getFornecedor = async () => {
+  const response = await api.get("/fornecedores");
+  return response.data;
+};
+
+export const createFornecedor = async (fornecedor) => {
+  const response = await api.post("/fornecedor", fornecedor);
+  return response.data;
+};
+
+export const updateFornecedor = async (codigo, fornecedor) => {
+  const response = await api.put(`/fornecedor/${codigo}`, fornecedor);
+  return response.data;
+};
+
+export const deleteFornecedor = async (codigo) => {
+  const response = await api.delete(`/fornecedor/${codigo}`);
   return response.data;
 };

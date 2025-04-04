@@ -1,10 +1,13 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const sql = require("mssql");
+const bcrypt = require("bcryptjs");
+const authenticateToken = require("./middleware/authMiddleware"); // Importar o middleware
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(cors());
 //app.use(express.json());
@@ -14,25 +17,227 @@ app.use(bodyParser.json());
 
 // Configuração da conexão com o SQL Server
 const config = {
-  user: "sa",
-  password: "xlaver",
-  server: "localhost", // Pode ser um endereço IP ou nome do servidor
-  database: "HRM",
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  server: process.env.DB_SERVER,
+  database: process.env.DB_NAME,
   options: {
-    encrypt: true, // Para conexões seguras
-    trustServerCertificate: true, // Se estiver usando um certificado autoassinado
+    encrypt: process.env.DB_ENCRYPT === "true",
+    trustServerCertificate: process.env.DB_TRUST_SERVER_CERTIFICATE === "true",
   },
 };
 
 // Conectar ao banco de dados
 sql
   .connect(config)
-  .then(() => {
-    console.log("Conectado ao SQL Server");
-  })
-  .catch((err) => {
-    console.error("Erro ao conectar ao SQL Server:", err);
-  });
+  .then(() => console.log("Conectado ao SQL Server"))
+  .catch((err) => console.error("Erro ao conectar ao SQL Server:", err));
+
+const jwt = require("jsonwebtoken");
+
+// Função para gerar token JWT
+const generateToken = (userId) => {
+  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "5s" });
+};
+
+// Rota pública
+app.get("/", (req, res) => {
+  res.send("Bem-vindo à API!");
+});
+
+// Rota protegida com middleware
+app.get("/dashboard", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const result = await sql.query`SELECT * FROM Users WHERE id = ${userId}`;
+    res.json(result.recordset[0]);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar dados do usuário." });
+  }
+});
+
+// app.post("/login", async (req, res) => {
+//   const { email, password } = req.body;
+
+//   try {
+//     // Buscar usuário pelo email
+//     const user = await sql.query`SELECT * FROM Users WHERE email = ${email}`;
+//     if (user.recordset.length === 0) {
+//       return res.status(401).json({ error: "Credenciais inválidas." });
+//     }
+
+//     const userData = user.recordset[0];
+
+//     // Comparar senhas
+//     const isMatch = await bcrypt.compare(password, userData.password_hash);
+//     if (!isMatch) {
+//       return res.status(401).json({ error: "Credenciais inválidas." });
+//     }
+
+//     // Gerar token JWT
+//     const token = generateToken(userData.id);
+
+//     res.json({
+//       message: "Login bem-sucedido!",
+//       token,
+//       user: {
+//         id: userData.id,
+//         username: userData.username,
+//         email: userData.email,
+//       },
+//     });
+//   } catch (err) {
+//     console.error("Erro ao fazer login:", err);
+//     res.status(500).json({ error: "Erro ao processar login." });
+//   }
+// });
+
+// Rota para registrar um novo usuário
+
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    console.log("Requisição recebida:", { email, password });
+
+    // Buscar usuário pelo email
+    const user = await sql.query`SELECT * FROM Users WHERE email = ${email}`;
+    console.log("Usuário encontrado no banco de dados:", user.recordset);
+
+    if (user.recordset.length === 0) {
+      console.error("Erro: Usuário não encontrado para o email:", email);
+      return res.status(401).json({ error: "Credenciais inválidas." });
+    }
+
+    const userData = user.recordset[0];
+
+    // Comparar senhas
+    const isMatch = await bcrypt.compare(password, userData.password_hash);
+    console.log("Senha válida?", isMatch);
+
+    if (!isMatch) {
+      console.error("Erro: Senha inválida para o email:", email);
+      return res.status(401).json({ error: "Credenciais inválidas." });
+    }
+
+    // Gerar token JWT
+    const token = jwt.sign({ userId: userData.id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    console.log("Login bem-sucedido. Token gerado:", token);
+
+    res.json({
+      message: "Login bem-sucedido!",
+      token,
+      user: {
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+      },
+    });
+  } catch (err) {
+    console.error("Erro ao fazer login:", err);
+    res.status(500).json({ error: "Erro ao processar login." });
+  }
+});
+
+app.post("/register", async (req, res) => {
+  const { username, email, password } = req.body;
+
+  try {
+    // Verificar se o email já existe
+    const existingUser =
+      await sql.query`SELECT * FROM Users WHERE email = ${email}`;
+    if (existingUser.recordset.length > 0) {
+      return res.status(400).json({ error: "Este email já está registrado." });
+    }
+
+    // Criar hash da senha
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    // Inserir o novo usuário no banco de dados
+    await sql.query`
+      INSERT INTO Users (username, email, password_hash)
+      VALUES (${username}, ${email}, ${passwordHash})
+    `;
+
+    res.status(201).json({ message: "Conta criada com sucesso!" });
+  } catch (err) {
+    console.error("Erro ao registrar usuário:", err);
+    res.status(500).json({ error: "Erro ao criar conta." });
+  }
+});
+
+const crypto = require("crypto");
+
+// Solicitar redefinição de senha
+app.post("/recover", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await sql.query`SELECT * FROM Users WHERE email = ${email}`;
+    if (user.recordset.length === 0) {
+      return res.status(404).json({ error: "Email não encontrado." });
+    }
+
+    const userData = user.recordset[0];
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 3600 * 1000); // 1 hora
+
+    // Salvar token no banco de dados
+    await sql.query`
+      INSERT INTO PasswordResetTokens (user_id, token, expires_at)
+      VALUES (${userData.id}, ${token}, ${expiresAt})
+    `;
+
+    // Simulação de envio de email (substitua por um serviço real)
+    console.log(
+      `Link de redefinição enviado para ${email}: http://localhost:3000/reset-password?token=${token}`
+    );
+
+    res.json({ message: "Link de redefinição enviado para o email." });
+  } catch (err) {
+    console.error("Erro ao solicitar redefinição de senha:", err);
+    res.status(500).json({ error: "Erro ao processar solicitação." });
+  }
+});
+
+// Redefinir senha
+app.post("/reset-password", async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  try {
+    const resetToken = await sql.query`
+      SELECT * FROM PasswordResetTokens WHERE token = ${token} AND expires_at > GETDATE()
+    `;
+    if (resetToken.recordset.length === 0) {
+      return res.status(400).json({ error: "Token inválido ou expirado." });
+    }
+
+    const tokenData = resetToken.recordset[0];
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    // Atualizar senha do usuário
+    await sql.query`
+      UPDATE Users SET password_hash = ${passwordHash} WHERE id = ${tokenData.user_id}
+    `;
+
+    // Remover token usado
+    await sql.query`DELETE FROM PasswordResetTokens WHERE id = ${tokenData.id}`;
+
+    res.json({ message: "Senha redefinida com sucesso!" });
+  } catch (err) {
+    console.error("Erro ao redefinir senha:", err);
+    res.status(500).json({ error: "Erro ao processar redefinição." });
+  }
+});
+
+// //middleware para proteger rotas autenticadas
+// app.get("/dashboard", authenticateToken, (req, res) => {
+//   res.json({ message: "Bem-vindo ao dashboard!", user: req.user });
+// });
 
 // Rotas para a tabela ESTOQUE_PRODUTO
 app.get("/estoque-produto", async (req, res) => {
@@ -63,7 +268,174 @@ app.post("/estoque-produto", async (req, res) => {
   }
 });
 
-// Rotas para a tabela FAMILIA_PRODUTO
+app.get("/estoque-data", authenticateToken, async (req, res) => {
+  try {
+    const stockData = await sql.query`
+      SELECT 
+        p.DESCRICAO AS produto, 
+        ep.QUANTIDADE AS quantidade
+      FROM 
+        ESTOQUE_PRODUTO ep
+      JOIN 
+        PRODUTO p ON ep.CODIGO_PRODUTO = p.CODIGO
+    `;
+    res.json(stockData.recordset);
+  } catch (err) {
+    console.error("Erro ao buscar dados de estoque:", err.message);
+    res.status(500).json({ error: "Erro ao buscar dados de estoque." });
+  }
+});
+
+app.get("/produto-aggregate", authenticateToken, async (req, res) => {
+  try {
+    // Por Família
+    const byFamily = await sql.query`
+      SELECT 
+        fp.DESCRICAO AS familia, 
+        COUNT(*) AS total
+      FROM 
+        PRODUTO p
+      JOIN 
+        FAMILIA_PRODUTO fp ON p.CODIGO_FAMILIA = fp.CODIGO
+      GROUP BY fp.DESCRICAO
+    `;
+
+    // Por Marca
+    const byMarca = await sql.query`
+      SELECT 
+        mp.DESCRICAO AS marca, 
+        COUNT(*) AS total
+      FROM 
+        PRODUTO p
+      JOIN 
+        MARCA_PRODUTO mp ON p.CODIGO_MARCA = mp.CODIGO
+      GROUP BY mp.DESCRICAO
+    `;
+
+    res.json({
+      byFamily: byFamily.recordset,
+      byMarca: byMarca.recordset,
+    });
+    console.log("🚀 ~ app.get ~ byFamily:", byFamily);
+  } catch (err) {
+    console.error("Erro ao buscar dados agregados de produtos:", err.message);
+    res
+      .status(500)
+      .json({ error: "Erro ao buscar dados agregados de produtos." });
+  }
+});
+
+// GET /fornecedores - Listar todos
+// POST /fornecedores - Criar
+// PUT /fornecedores/:codigo - Atualizar
+// DELETE /fornecedores/:codigo - Excluir
+
+// Rota GET - Listar todos os fornecedores
+app.get("/fornecedores", async (req, res) => {
+  try {
+    const result = await sql.query`SELECT * FROM FORNECEDOR`;
+    res.json(result.recordset);
+  } catch (err) {
+    console.error("Erro ao buscar fornecedores:", err.message);
+    res.status(500).json({ error: "Erro ao buscar fornecedores." });
+  }
+});
+
+// Rota POST - Criar um novo fornecedor
+app.post("/fornecedor", async (req, res) => {
+  try {
+    const { NOME, CNPJ, TELEFONE, EMAIL, ENDERECO } = req.body;
+
+    // Validar campos obrigatórios
+    if (!NOME || !CNPJ) {
+      return res.status(400).json({ error: "Nome e CNPJ são obrigatórios." });
+    }
+
+    // Inserir fornecedor no banco de dados
+    await sql.query`
+      INSERT INTO FORNECEDOR (NOME, CNPJ, TELEFONE, EMAIL, ENDERECO)
+      VALUES (${NOME}, ${CNPJ}, ${TELEFONE || null}, ${EMAIL || null}, ${
+      ENDERECO || null
+    })
+    `;
+
+    res.status(201).json({ message: "Fornecedor criado com sucesso!" });
+  } catch (err) {
+    console.error("Erro ao criar fornecedor:", err.message);
+    res.status(500).json({ error: "Erro ao criar fornecedor." });
+  }
+});
+
+// Rota PUT - Atualizar um fornecedor existente
+app.put("/fornecedor/:codigo", async (req, res) => {
+  try {
+    const { codigo } = req.params;
+    console.log("🚀 ~ app.put ~ codigo:", codigo);
+    const { NOME, CNPJ, TELEFONE, EMAIL, ENDERECO } = req.body;
+
+    // Validar campos obrigatórios
+    if (!NOME || !CNPJ) {
+      return res.status(400).json({ error: "Nome e CNPJ são obrigatórios." });
+    }
+
+    // Atualizar fornecedor no banco de dados
+    await sql.query`
+      UPDATE FORNECEDOR
+      SET 
+        NOME = ${NOME},
+        CNPJ = ${CNPJ},
+        TELEFONE = ${TELEFONE || null},
+        EMAIL = ${EMAIL || null},
+        ENDERECO = ${ENDERECO || null}
+      WHERE CODIGO = ${codigo}
+    `;
+
+    res.json({ message: "Fornecedor atualizado com sucesso!" });
+  } catch (err) {
+    console.error("Erro ao atualizar fornecedor:", err.message);
+    res.status(500).json({ error: "Erro ao atualizar fornecedor." });
+  }
+});
+
+// Rota DELETE - Excluir um fornecedor
+app.delete("/fornecedor/:codigo", async (req, res) => {
+  try {
+    const { codigo } = req.params;
+
+    // Excluir fornecedor do banco de dados
+    await sql.query`
+      DELETE FROM FORNECEDOR
+      WHERE CODIGO = ${codigo}
+    `;
+
+    res.json({ message: "Fornecedor excluído com sucesso!" });
+  } catch (err) {
+    console.error("Erro ao excluir fornecedor:", err.message);
+    res.status(500).json({ error: "Erro ao excluir fornecedor." });
+  }
+});
+
+// Rota GET - Obter um fornecedor por código
+app.get("/fornecedor/:codigo", async (req, res) => {
+  try {
+    const { codigo } = req.params;
+
+    const result = await sql.query`
+      SELECT * FROM FORNECEDOR
+      WHERE CODIGO = ${codigo}
+    `;
+
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ error: "Fornecedor não encontrado." });
+    }
+
+    res.json(result.recordset[0]);
+  } catch (err) {
+    console.error("Erro ao buscar fornecedor:", err.message);
+    res.status(500).json({ error: "Erro ao buscar fornecedor." });
+  }
+});
+
 app.get("/familia-produto", async (req, res) => {
   try {
     const result =
@@ -119,6 +491,59 @@ app.get("/produto", async (req, res) => {
   }
 });
 
+// Rota para dados de estoque
+app.get("/produto/estoque", async (req, res) => {
+  try {
+    const result = await sql.query`
+      SELECT TOP (10)
+        CODIGO,
+        DESCRICAO,
+        ESTOQUE_ATUAL,
+        ESTOQUE_MINIMO 
+      FROM PRODUTO            
+    `;
+    console.log("Dados obtidos:", result.recordset); // Log dos dados obtidos
+    res.json(result.recordset);
+  } catch (err) {
+    console.error("Erro ao buscar dados de estoque:", err.message); // Log detalhado
+    res.status(500).json({
+      error: "Erro ao buscar dados de estoque.",
+      details: err.message, // Inclui detalhes do erro
+    });
+  }
+});
+
+// Rota para dados agregados
+app.get("/produto/aggregate", async (req, res) => {
+  try {
+    const byFamily = await sql.query`
+      SELECT TOP (10)
+        f.DESCRICAO AS FAMILIA,
+        SUM(p.ESTOQUE_ATUAL) AS total
+      FROM PRODUTO p
+      INNER JOIN FAMILIA_PRODUTO f ON p.CODIGO_FAMILIA = f.CODIGO
+      GROUP BY f.DESCRICAO
+      ORDER BY total DESC
+    `;
+
+    const byMarca = await sql.query`
+      SELECT TOP (10)
+        m.DESCRICAO AS MARCA,
+        SUM(p.ESTOQUE_ATUAL) AS total
+      FROM PRODUTO p
+      INNER JOIN MARCA_PRODUTO m ON p.CODIGO_MARCA = m.CODIGO
+      GROUP BY m.DESCRICAO
+    `;
+
+    res.json({
+      byFamily: byFamily.recordset,
+      byMarca: byMarca.recordset,
+    });
+  } catch (err) {
+    res.status(500).send("Erro ao buscar dados agregados");
+  }
+});
+
 app.post("/produto", async (req, res) => {
   try {
     const {
@@ -130,9 +555,11 @@ app.post("/produto", async (req, res) => {
       ESTOQUE_ATUAL,
       CODIGO_MARCA,
       CODIGO_FAMILIA,
+      VALOR_UNITARIO,
+      COD_FORNECEDOR,
     } = req.body;
     const result =
-      await sql.query`INSERT INTO PRODUTO (CODIGO, CODIGO_INTERNO, DESCRICAO, CODIGO_BARRAS, ESTOQUE_MINIMO, ESTOQUE_ATUAL, CODIGO_MARCA, CODIGO_FAMILIA) VALUES (${CODIGO}, ${CODIGO_INTERNO}, ${DESCRICAO}, ${CODIGO_BARRAS}, ${ESTOQUE_MINIMO}, ${ESTOQUE_ATUAL}, ${CODIGO_MARCA}, ${CODIGO_FAMILIA})`;
+      await sql.query`INSERT INTO PRODUTO (CODIGO, CODIGO_INTERNO, DESCRICAO, CODIGO_BARRAS, ESTOQUE_MINIMO, ESTOQUE_ATUAL, CODIGO_MARCA, CODIGO_FAMILIA, VALOR_UNITARIO, COD_FORNECEDOR) VALUES (${CODIGO}, ${CODIGO_INTERNO}, ${DESCRICAO}, ${CODIGO_BARRAS}, ${ESTOQUE_MINIMO}, ${ESTOQUE_ATUAL}, ${CODIGO_MARCA}, ${CODIGO_FAMILIA}, ${COD_FORNECEDOR}, ${VALOR_UNITARIO})`;
     res.status(201).send("Registro inserido com sucesso");
   } catch (err) {
     res.status(500).send("Erro ao inserir Produto");
@@ -184,6 +611,8 @@ app.put("/produto/:id", async (req, res) => {
       ESTOQUE_ATUAL,
       CODIGO_MARCA,
       CODIGO_FAMILIA,
+      COD_FORNECEDOR,
+      VALOR_UNITARIO,
     } = req.body;
 
     // 1. Atualizar o produto
@@ -194,7 +623,9 @@ app.put("/produto/:id", async (req, res) => {
       ESTOQUE_MINIMO = ${ESTOQUE_MINIMO},
       ESTOQUE_ATUAL = ${ESTOQUE_ATUAL},
       CODIGO_MARCA = ${CODIGO_MARCA},
-      CODIGO_FAMILIA = ${CODIGO_FAMILIA}
+      CODIGO_FAMILIA = ${CODIGO_FAMILIA},
+      COD_FORNECEDOR = ${COD_FORNECEDOR},
+      VALOR_UNITARIO = ${VALOR_UNITARIO}
       WHERE CODIGO = ${id}`;
 
     // 2. Gerenciar alertas de estoque
@@ -282,11 +713,6 @@ app.put("/produto/:id", async (req, res) => {
 //   }
 // });
 
-// Iniciar o servidor
-app.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`);
-});
-
 // rota-exclusao
 app.delete("/produto/:id", async (req, res) => {
   try {
@@ -298,53 +724,6 @@ app.delete("/produto/:id", async (req, res) => {
 });
 
 // back-end/app.js
-
-// Rota para dados de estoque
-app.get("/produto/estoque", async (req, res) => {
-  try {
-    const result = await sql.query`
-      SELECT 
-        CODIGO,
-        DESCRICAO,
-        ESTOQUE_ATUAL,
-        ESTOQUE_MINIMO 
-      FROM PRODUTO
-    `;
-    res.json(result.recordset);
-  } catch (err) {
-    res.status(500).send("Erro ao buscar dados de estoque");
-  }
-});
-
-// Rota para dados agregados
-app.get("/produto/aggregate", async (req, res) => {
-  try {
-    const byFamily = await sql.query`
-      SELECT 
-        f.DESCRICAO AS FAMILIA,
-        SUM(p.ESTOQUE_ATUAL) AS total
-      FROM PRODUTO p
-      INNER JOIN FAMILIA_PRODUTO f ON p.CODIGO_FAMILIA = f.CODIGO
-      GROUP BY f.DESCRICAO
-    `;
-
-    const byMarca = await sql.query`
-      SELECT 
-        m.DESCRICAO AS MARCA,
-        SUM(p.ESTOQUE_ATUAL) AS total
-      FROM PRODUTO p
-      INNER JOIN MARCA_PRODUTO m ON p.CODIGO_MARCA = m.CODIGO
-      GROUP BY m.DESCRICAO
-    `;
-
-    res.json({
-      byFamily: byFamily.recordset,
-      byMarca: byMarca.recordset,
-    });
-  } catch (err) {
-    res.status(500).send("Erro ao buscar dados agregados");
-  }
-});
 
 // Rotas para alertas
 app.get("/alertas", async (req, res) => {
@@ -514,26 +893,6 @@ app.delete("/marca-produto/:id", async (req, res) => {
     res.send("Marca excluída com sucesso");
   } catch (err) {
     res.status(500).send("Erro ao excluir marca");
-  }
-});
-
-// Nova Rota para Totais
-app.get("/totais", async (req, res) => {
-  try {
-    const produtos = await sql.query`SELECT COUNT(*) AS total FROM PRODUTO`;
-    const movimentacoes =
-      await sql.query`SELECT COUNT(*) AS total FROM ESTOQUE_PRODUTO`;
-    const marcas = await sql.query`SELECT COUNT(*) AS total FROM MARCA_PRODUTO`;
-    const familias =
-      await sql.query`SELECT COUNT(*) AS total FROM FAMILIA_PRODUTO`;
-
-    res.json({
-      produtos: produtos.recordset[0].total,
-      marcas: marcas.recordset[0].total,
-      familias: familias.recordset[0].total,
-    });
-  } catch (err) {
-    res.status(500).json({ error: "Erro ao buscar totais" });
   }
 });
 
@@ -882,13 +1241,47 @@ app.post("/estoque/movimentacao", async (req, res) => {
 // });
 
 // Backend (Node.js)
+// app.get("/produtos/busca", async (req, res) => {
+//   try {
+//     const termo = req.query.termo || "";
+//     const searchTerm = `%${termo}%`; // Adiciona % para busca parcial
+
+//     let query = `
+//       SELECT
+//         p.CODIGO,
+//         p.CODIGO_BARRAS AS EAN,
+//         p.DESCRICAO,
+//         p.ESTOQUE_ATUAL,
+//         m.DESCRICAO AS MARCA,
+//         f.DESCRICAO AS FAMILIA
+//       FROM PRODUTO p
+//       LEFT JOIN MARCA_PRODUTO m ON p.CODIGO_MARCA = m.CODIGO
+//       LEFT JOIN FAMILIA_PRODUTO f ON p.CODIGO_FAMILIA = f.CODIGO
+//     `;
+
+//     // Só adiciona WHERE se houver termo
+//     if (termo) {
+//       query += `
+//         WHERE
+//           p.CODIGO_BARRAS LIKE ${searchTerm} OR
+//           p.CODIGO LIKE ${searchTerm} OR
+//           p.DESCRICAO LIKE ${searchTerm}
+//       `;
+//     }
+
+//     const result = await sql.query(query);
+//     res.json(result.recordset);
+//   } catch (err) {
+//     res.status(500).json({ error: "Erro na busca de produtos" });
+//   }
+// });
 app.get("/produtos/busca", async (req, res) => {
   try {
     const termo = req.query.termo || "";
     const searchTerm = `%${termo}%`; // Adiciona % para busca parcial
 
     const result = await sql.query`
-      SELECT 
+      SELECT
         p.CODIGO,
         p.CODIGO_BARRAS AS EAN,
         p.DESCRICAO,
@@ -898,7 +1291,7 @@ app.get("/produtos/busca", async (req, res) => {
       FROM PRODUTO p
       LEFT JOIN MARCA_PRODUTO m ON p.CODIGO_MARCA = m.CODIGO
       LEFT JOIN FAMILIA_PRODUTO f ON p.CODIGO_FAMILIA = f.CODIGO
-      WHERE 
+      WHERE
         p.CODIGO_BARRAS LIKE ${searchTerm} OR
         p.CODIGO LIKE ${searchTerm} OR
         p.DESCRICAO LIKE ${searchTerm}
@@ -918,6 +1311,14 @@ app.post("/estoque/movimentar", async (req, res) => {
   try {
     const { codigoProduto, tipo, quantidade, usuario } = req.body;
 
+    // Converter para número
+    const qtdNumerica = Number(quantidade);
+
+    // Validar se é um número válido
+    if (isNaN(qtdNumerica)) {
+      return res.status(400).json({ error: "Quantidade inválida" });
+    }
+
     await transaction.begin();
 
     // 1. Buscar estoque atual
@@ -930,7 +1331,8 @@ app.post("/estoque/movimentar", async (req, res) => {
     }
 
     const estoqueAtual = produto.recordset[0].ESTOQUE_ATUAL;
-    let novoEstoque = estoqueAtual;
+    let novoEstoque = produto.recordset[0].ESTOQUE_ATUAL;
+    // estoqueAtual;
 
     // 2. Calcular novo estoque
     switch (tipo) {
@@ -976,58 +1378,15 @@ app.post("/estoque/movimentar", async (req, res) => {
       Usuário: ${usuario}
     `);
 
-    res.json({ success: true, estoqueAnterior: estoqueAtual, novoEstoque });
+    res.json({
+      success: true,
+      estoqueAnterior: produto.recordset[0].ESTOQUE_ATUAL,
+      novoEstoque,
+    });
   } catch (err) {
     await transaction.rollback();
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// app.get("/familia-produto/ultimo-codigo", async (req, res) => {
-//   try {
-//     const result = await sql.query`
-//         SELECT MAX(CAST(CODIGO AS INT)) AS ultimoCodigo FROM FAMILIA_PRODUTO
-//     `;
-
-//     // Corrigindo conversão para número
-//     const ultimoCodigo = Number(result.recordset[0].ultimoCodigo) || 0;
-
-//     //res.json({ proximoCodigo: ultimoCodigo + 1 });
-//     const proximoCodigo = ultimoCodigo + 1;
-
-//     console.log("Último código do banco:", result.recordset[0].ultimoCodigo);
-//     console.log("Próximo código calculado:", ultimoCodigo + 1);
-//     console.log("Próximo código gerado:", proximoCodigo); // Para depuração
-//     res.json({ proximoCodigo });
-//   } catch (err) {
-//     res.status(500).json({ error: "Erro ao buscar último código" });
-//   }
-// });
-
-// app.get("/familia-produto/ultimo-codigo", async (req, res) => {
-//   try {
-//     const result = await sql.query`
-//       SELECT MAX(CODIGO) AS ultimoCodigo FROM FAMILIA_PRODUTO
-//     `;
-
-//     const ultimoCodigo = result.recordset[0].ultimoCodigo || 0;
-//     // console.log("🚀 ~ app.get ~ ultimoCodigo:", ultimoCodigo);
-//     res.json({ proximoCodigo: ultimoCodigo + 1 });
-//   } catch (err) {
-//     res.status(500).json({ error: "Erro ao buscar último código" });
-//   }
-// });
-
-// Rota para obter último código
-app.get("/marca/ultimo-codigo", async (req, res) => {
-  try {
-    const result = await sql.query`
-      SELECT MAX(CODIGO) AS ultimoCodigo FROM MARCA
-    `;
-    const ultimoCodigo = Number(result.recordset[0].ultimoCodigo) || 0;
-    res.json({ proximoCodigo: ultimoCodigo + 1 });
-  } catch (err) {
-    res.status(500).json({ error: "Erro ao buscar último código" });
+    res.status(500).json({ error: "Erro ao registrar movimentação" });
+    //res.status(500).json({ error: err.message });
   }
 });
 
@@ -1058,4 +1417,72 @@ app.put("/marca/:codigo", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: "Erro ao atualizar marca" });
   }
+});
+
+// Nova Rota para Valor Total do Estoque
+app.get("/estoque/valor-total", async (req, res) => {
+  try {
+    const result = await sql.query`
+      SELECT SUM(ESTOQUE_ATUAL * VALOR_UNITARIO) AS ValorTotal
+      FROM PRODUTO
+    `;
+
+    res.json({ valorTotal: result.recordset[0].ValorTotal || 0 });
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao calcular valor do estoque" });
+  }
+});
+
+app.get("/totais", async (req, res) => {
+  try {
+    const produtos = await sql.query`SELECT COUNT(*) AS total FROM PRODUTO`;
+    const movimentacoes =
+      await sql.query`SELECT COUNT(*) AS total FROM ESTOQUE_PRODUTO`;
+    const marcas = await sql.query`SELECT COUNT(*) AS total FROM MARCA_PRODUTO`;
+    const familias =
+      await sql.query`SELECT COUNT(*) AS total FROM FAMILIA_PRODUTO`;
+    res.json({
+      produtos: produtos.recordset[0].total,
+      marcas: marcas.recordset[0].total,
+      familias: familias.recordset[0].total,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar totais" });
+  }
+});
+
+app.get("/totais", async (req, res) => {
+  try {
+    console.log("Requisição recebida na rota /totais");
+    const totalProdutos =
+      await sql.query`SELECT COUNT(*) AS total FROM PRODUTO`;
+    const totalMovimentacoes =
+      await sql.query`SELECT COUNT(*) AS total FROM ESTOQUE_PRODUTO`;
+    const totalMarcas =
+      await sql.query`SELECT COUNT(*) AS total FROM MARCA_PRODUTO`;
+    const totalFamilias =
+      await sql.query`SELECT COUNT(*) AS total FROM FAMILIA_PRODUTO`;
+
+    console.log("Dados obtidos:", {
+      produtos: totalProdutos.recordset[0].total,
+      movimentacoes: totalMovimentacoes.recordset[0].total,
+      marcas: totalMarcas.recordset[0].total,
+      familias: totalFamilias.recordset[0].total,
+    });
+
+    res.json({
+      produtos: totalProdutos.recordset[0]?.total || 0,
+      // movimentacoes: totalMovimentacoes.recordset[0]?.total || 0,
+      marcas: totalMarcas.recordset[0]?.total || 0,
+      familias: totalFamilias.recordset[0]?.total || 0,
+    });
+  } catch (err) {
+    console.error("Erro ao buscar totais:", err.message);
+    res.status(500).json({ error: "Erro ao buscar totais." });
+  }
+});
+
+// Iniciar o servidor
+app.listen(port, () => {
+  console.log(`Servidor rodando em http://localhost:${port}`);
 });

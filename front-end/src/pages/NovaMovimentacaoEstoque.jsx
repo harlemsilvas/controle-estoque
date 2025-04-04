@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, setLoading } from "react";
 import { toastSuccess, toastError } from "../services/toast";
 import Header from "../components/Header";
 import { buscarProdutos, registrarMovimentacao } from "../services/api";
@@ -7,11 +7,70 @@ const NovaMovimentacaoEstoque = () => {
   const [termoBusca, setTermoBusca] = useState("");
   const [resultados, setResultados] = useState([]);
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
+  const [buscarNovamente, setBuscarNovamente] = useState(false); // <-- Novo estado
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     tipo: "E",
     quantidade: "",
     usuario: "ADMIN", // Substituir por usuário logado
   });
+
+  const buscarProdutosAtualizados = useCallback(async () => {
+    try {
+      const data = await buscarProdutos(termoBusca);
+      setResultados(data);
+    } catch (error) {
+      toastError(error.message || "Erro ao atualizar lista");
+    } finally {
+      setLoading(false);
+      setBuscarNovamente(false);
+    }
+  }, [termoBusca]); // Dependências da função
+
+  // MODIFICAÇÃO PARA NÃO VALIDAR O TERMO BUSCA
+  // const handleBusca = useCallback(async () => {
+  //   try {
+  //     const termoTratado = termoBusca.trim().replace(/\s+/g, " ");
+  //     const termoCodificado = encodeURIComponent(termoTratado);
+
+  //     if (!termoTratado) {
+  //       toastError("Digite um critério de busca");
+  //       return;
+  //     }
+
+  //     setLoading(true);
+  //     const data = await buscarProdutos(termoCodificado);
+  //     setResultados(data);
+  //   } catch (error) {
+  //     toastError(error.message || "Erro na busca de produtos");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, [termoBusca]); // Dependências: termoBusca
+  // MODIFICAÇÃO PARA NÃO VALIDAR O TERMO BUSCA
+  const handleBusca = useCallback(
+    async (isInitialLoad = false) => {
+      try {
+        const termoTratado = termoBusca.trim().replace(/\s+/g, " ");
+        const termoCodificado = encodeURIComponent(termoTratado);
+
+        // Não exibir erro se for carregamento inicial
+        if (!isInitialLoad && !termoTratado) {
+          toastError("Digite um critério de busca");
+          return;
+        }
+
+        setLoading(true);
+        const data = await buscarProdutos(termoCodificado);
+        setResultados(data);
+      } catch (error) {
+        toastError(error.message || "Erro na busca de produtos");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [termoBusca]
+  );
 
   // const handleBusca = async () => {
   //   try {
@@ -22,29 +81,97 @@ const NovaMovimentacaoEstoque = () => {
   //   }
   // };
   // components/NovaMovimentacaoEstoque.js
-  const handleBusca = async () => {
-    try {
-      const termoTratado = termoBusca.trim().replace(/\s+/g, " "); // Remove espaços extras
-      const termoCodificado = encodeURIComponent(termoTratado); // Codifica caracteres especiais
 
-      if (!termoTratado) {
-        toastError("Digite um critério de busca");
-        return;
-      }
+  // Retirado, para melhorar a função, e não entrar em loop
+  // useEffect(() => {
+  //   if (buscarNovamente) {
+  //     const buscarProdutosAtualizados = async () => {
+  //       try {
+  //         const data = await buscarProdutos(termoBusca);
+  //         setResultados(data);
+  //       } catch (error) {
+  //         toastError(error.message || "Erro ao atualizar lista");
+  //       } finally {
+  //         setBuscarNovamente(false); // Reseta o estado após a busca
+  //       }
+  //     };
 
-      const data = await buscarProdutos(termoCodificado);
-      setResultados(data);
-    } catch (error) {
-      toastError(error.message);
+  //     buscarProdutosAtualizados();
+  //   }
+  // }, [buscarNovamente, termoBusca]); // <-- Executa quando buscarNovamente muda
+
+  // Busca inicial ao montar o componente - EXCLUIDO POIS DA ERRO QUANDO MONTA O COMPONENTE
+  // useEffect(() => {
+  //   handleBusca();
+  // }, [handleBusca]); // <- Agora handleBusca é uma dependência estável
+
+  useEffect(() => {
+    if (buscarNovamente) {
+      buscarProdutosAtualizados();
     }
-  };
+  }, [buscarNovamente, buscarProdutosAtualizados]); // <-- Agora a função é estável
+
+  // // Efeito para atualização após movimentação
+  // useEffect(() => {
+  //   const buscarAposMovimentacao = async () => {
+  //     try {
+  //       const data = await buscarProdutos(termoBusca);
+  //       setResultados(data);
+  //     } catch (error) {
+  //       toastError(error.message || "Erro ao atualizar lista");
+  //     } finally {
+  //       setLoading(false);
+  //       setBuscarNovamente(false);
+  //     }
+  //   };
+
+  //   if (buscarNovamente) {
+  //     buscarAposMovimentacao();
+  //   }
+  // }, [buscarNovamente, termoBusca]); // Dependências explícitas
+
+  // Efeito para atualizar a lista após movimentação
+  useEffect(() => {
+    const buscarAposMovimentacao = async () => {
+      try {
+        await handleBusca(); // Usa a função memoizada
+        setBuscarNovamente(false);
+      } catch (error) {
+        toastError(error.message);
+      }
+    };
+
+    if (buscarNovamente) {
+      buscarAposMovimentacao();
+    }
+  }, [buscarNovamente, handleBusca]); // Dependências explícitas
+
+  // const handleBusca = async () => {
+  //   try {
+  //     const termoTratado = termoBusca.trim().replace(/\s+/g, " "); // Remove espaços extras
+  //     const termoCodificado = encodeURIComponent(termoTratado); // Codifica caracteres especiais
+
+  //     if (!termoTratado) {
+  //       toastError("Digite um critério de busca");
+  //       return;
+  //     }
+
+  //     const data = await buscarProdutos(termoCodificado);
+  //     setResultados(data);
+  //   } catch (error) {
+  //     toastError(error.message);
+  //   }
+  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const response = await registrarMovimentacao({
         codigoProduto: produtoSelecionado.CODIGO,
-        ...form,
+        tipo: form.tipo,
+        quantidade: Number(form.quantidade), // <-- Converta para número
+        usuario: form.usuario,
+        // ...form,
       });
 
       toastSuccess(`
@@ -61,10 +188,15 @@ const NovaMovimentacaoEstoque = () => {
         novoEstoque: response.novoEstoque,
       });
 
+      // Após sucesso:
+      // setBuscarNovamente(true); // <-- Força nova busca
+
+      // Força atualização imediata
+      setBuscarNovamente(true);
       // Reset form
-      setForm({ tipo: "E", quantidade: "", usuario: "operador" });
+      setForm({ tipo: "E", quantidade: "", usuario: "ADMIN" });
       setProdutoSelecionado(null);
-      setTermoBusca("");
+      //setTermoBusca("");
     } catch (error) {
       toastError(error.message);
     }
@@ -76,6 +208,9 @@ const NovaMovimentacaoEstoque = () => {
 
       <div className="container mx-auto px-6 py-8">
         {/* Busca de Produtos */}
+        <center>
+          <h2>"Controle de Estoque por Código de Barras, Nome ou Código"</h2>
+        </center>
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <div className="flex gap-4 mb-4">
             <input
@@ -149,12 +284,17 @@ const NovaMovimentacaoEstoque = () => {
                 <label className="block font-medium mb-2">Quantidade</label>
                 <input
                   type="number"
-                  min="1"
+                  min="0"
                   required
                   className="w-full p-2 border rounded"
                   value={form.quantidade}
-                  onChange={(e) =>
-                    setForm({ ...form, quantidade: e.target.value })
+                  onChange={
+                    (e) => {
+                      // Forçar entrada numérica
+                      const value = e.target.value.replace(/[^0-9]/g, "");
+                      setForm({ ...form, quantidade: value });
+                    }
+                    //  setForm({ ...form, quantidade: e.target.value })
                   }
                 />
               </div>

@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import Header from "../components/Header";
 import { getEstoqueData, getProdutoAggregate } from "../services/api";
+import { toastError } from "../services/toast";
 import _ from "lodash";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AF19FF"];
@@ -28,12 +29,18 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const stock = await getEstoqueData();
-      const aggregate = await getProdutoAggregate();
+      try {
+        const stock = await getEstoqueData();
+        const aggregate = await getProdutoAggregate();
 
-      setStockData(stock);
-      setAggregateData(aggregate);
-      setLoading(false);
+        setStockData(stock);
+        setAggregateData(aggregate);
+      } catch (error) {
+        console.error("Erro ao carregar dados do dashboard:", error.message);
+        toastError(error.message || "Erro ao carregar dados do dashboard.");
+      } finally {
+        setLoading(false); // Garantir que o estado loading seja atualizado
+      }
     };
     fetchData();
   }, []);

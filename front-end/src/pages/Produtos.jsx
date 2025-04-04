@@ -17,7 +17,7 @@ const Produtos = () => {
       const { count } = await getLixeiraCount();
       setDeletedCount(count);
     } catch (error) {
-      alert("Erro ao excluir produto");
+      alert(error.message || "Erro ao excluir produto");
     }
   };
   const [produtos, setProdutos] = useState([]);

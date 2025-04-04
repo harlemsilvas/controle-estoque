@@ -48,7 +48,9 @@ const MovimentacaoEstoque = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header title="Controle de Estoque por Código de Barras" />
-
+      <center>
+        <h2>"Controle de Estoque por Código de Barras"</h2>
+      </center>
       <div className="container mx-auto px-6 py-8">
         {/* Formulário de Leitura */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">

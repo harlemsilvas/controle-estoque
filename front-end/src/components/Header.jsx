@@ -1,11 +1,12 @@
 // src/components/Header.jsx
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getLixeiraCount } from "../services/api";
 import AlertBadge from "./AlertBadge";
 
 const Header = ({ title, btnText, btnPath }) => {
   const [deletedCount, setDeletedCount] = useState(0);
+  const navigate = useNavigate();
 
   // Carrega a contagem ao montar o componente
   useEffect(() => {
@@ -19,6 +20,12 @@ const Header = ({ title, btnText, btnPath }) => {
     };
     loadCount();
   }, []);
+
+  // Função para sair
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // Remove o token JWT
+    navigate("/login"); // Redireciona para a página de login
+  };
 
   return (
     <header className="bg-white shadow-lg">
@@ -36,17 +43,7 @@ const Header = ({ title, btnText, btnPath }) => {
               >
                 Produtos
               </Link>
-              <Link
-                to="/produtos/lixeira"
-                className="px-4 py-2 text-red-600 hover:text-red-800 transition relative"
-              >
-                Lixeira
-                {deletedCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
-                    {deletedCount}
-                  </span>
-                )}
-              </Link>
+
               <Link
                 to="/marcas"
                 className="px-4 py-2 text-gray-600 hover:text-blue-600 transition"
@@ -85,17 +82,26 @@ const Header = ({ title, btnText, btnPath }) => {
                   Mov. Estoque
                 </div>
               </Link>
-              {/* <Link
+
+              <Link
                 to="/produtos/lixeira"
-                className="px-4 py-2 text-red-600 hover:text-red-800 relative"
+                className="px-4 py-2 text-red-600 hover:text-red-800 transition relative"
               >
                 Lixeira
-                {lixeiraCount > 0 && (
+                {deletedCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
-                    {lixeiraCount}
+                    {deletedCount}
                   </span>
                 )}
-              </Link> */}
+              </Link>
+
+              {/* Novo link para Fornecedores */}
+              <Link
+                to="/fornecedores"
+                className="px-4 py-2 text-gray-600 hover:text-blue-600 transition"
+              >
+                Fornecedores
+              </Link>
             </div>
           </div>
 
@@ -108,6 +114,14 @@ const Header = ({ title, btnText, btnPath }) => {
                 {btnText}
               </Link>
             )}
+
+            {/* Botão Sair */}
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+            >
+              Sair
+            </button>
           </div>
         </div>
       </nav>
@@ -116,57 +130,3 @@ const Header = ({ title, btnText, btnPath }) => {
 };
 
 export default Header;
-// import { Link } from "react-router-dom";
-// import AlertBadge from "./AlertBadge";
-
-// const Header = () => {
-//   return (
-//     <header className="bg-white shadow-lg">
-//       <div className="flex items-center space-x-6">
-//         <AlertBadge />
-//         {/* ... outros elementos ... */}
-//         <nav className="container mx-auto px-6 py-4">
-//           <div className="flex items-center justify-between">
-//             <Link to="/" className="text-2xl font-bold text-blue-600">
-//               EstoqueApp
-//             </Link>
-//             <div className="flex space-x-4">
-//               <Link
-//                 to="/"
-//                 className="px-4 py-2 text-gray-600 hover:text-blue-600 transition"
-//               >
-//                 Home
-//               </Link>
-//               <Link
-//                 to="/produtos"
-//                 className="px-4 py-2 text-gray-600 hover:text-blue-600 transition"
-//               >
-//                 Produtos
-//               </Link>
-//               <Link
-//                 to="/familias"
-//                 className="px-4 py-2 text-gray-600 hover:text-blue-600 transition"
-//               >
-//                 Famílias
-//               </Link>
-//               <Link
-//                 to="/marcas"
-//                 className="px-4 py-2 text-gray-600 hover:text-blue-600 transition"
-//               >
-//                 Marcas
-//               </Link>
-//               <Link
-//                 to="/dashboard"
-//                 className="px-4 py-2 text-gray-600 hover:text-blue-600 transition"
-//               >
-//                 Dashboard
-//               </Link>
-//             </div>
-//           </div>
-//         </nav>
-//       </div>
-//     </header>
-//   );
-// };
-
-// export default Header;

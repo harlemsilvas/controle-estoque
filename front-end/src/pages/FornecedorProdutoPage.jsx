@@ -101,7 +101,7 @@ const FornecedorProdutoPage = () => {
 
   return (
     <>
-      <Header />
+      <Header title={"Cadastro de fornecedores"} />
       <div className="min-h-screen bg-gray-50 p-6">
         {mode === MODES.LIST ? (
           <div className="max-w-4xl mx-auto">

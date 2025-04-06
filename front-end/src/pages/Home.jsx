@@ -10,6 +10,7 @@ const Home = () => {
     movimentacoes: 0,
     marcas: 0,
     familias: 0,
+    fornecedores: 0,
   });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -163,6 +164,22 @@ const Home = () => {
         />
       </svg>
     ),
+    fornecedores: (
+      <svg
+        className="w-6 h-6 text-purple-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 6l-6 6h12l-6-6zM5 18h14v2H5v-2z"
+        />
+      </svg>
+    ),
   };
 
   return (
@@ -171,11 +188,11 @@ const Home = () => {
 
       {/* Barra de Navegação */}
       <nav className="bg-white shadow-md py-4 px-6 flex justify-between items-center">
-        <div>
+        {/* <div>
           <Link to="/" className="text-xl font-bold text-blue-600">
             Sistema de Gestão de Estoque
           </Link>
-        </div>
+        </div> */}
         <div className="space-x-4">
           {!localStorage.getItem("token") ? (
             <>
@@ -190,12 +207,14 @@ const Home = () => {
               </Link>
             </>
           ) : (
-            <button
-              onClick={handleLogout}
-              className="text-red-600 hover:text-red-800"
-            >
-              Sair
-            </button>
+            !(
+              <button
+                onClick={handleLogout}
+                className="text-red-600 hover:text-red-800"
+              >
+                Sair
+              </button>
+            )
           )}
         </div>
       </nav>
@@ -242,6 +261,14 @@ const Home = () => {
             color="text-purple-600"
             link="/familias"
             icon={icons.familia}
+          />
+
+          <MetricCard
+            title="Fornecedores"
+            value={totais.fornecedores}
+            color="text-purple-600"
+            link="/fornecedores"
+            icon={icons.fornecedores}
           />
         </div>
 

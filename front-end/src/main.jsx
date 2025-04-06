@@ -13,7 +13,6 @@ import ProdutoForm from "./pages/ProdutoForm";
 import Dashboard from "./pages/Dashboard";
 import FamiliaProdutoPage from "./pages/FamiliaProdutoPage";
 import MarcaProdutoPage from "./pages/MarcaProdutoPage";
-// import CadastroFornecedor from "./pages/CadastroFornecedor";
 import LixeiraProdutos from "./pages/LixeiraProdutos";
 import AlertasHistorico from "./pages/AlertasHistorico";
 import MovimentacaoEstoque from "./pages/MovimentacaoEstoque";
@@ -21,8 +20,22 @@ import NovaMovimentacaoEstoque from "./pages/NovaMovimentacaoEstoque";
 import NotFound from "./components/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RegisterPage from "./pages/RegisterPage";
-import FornecedorForm from "./pages/FornecedorForm";
+import RecoverPage from "./pages/RecoverPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import FornecedorProdutoPage from "./pages/FornecedorProdutoPage";
+import AdminMenu from "./pages/AdminMenu";
+import AdminTotalizacao from "./pages/AdminTotalizacao"; // Importe a página de totalização
+import AdminTotalizacaoFamilia from "./pages/AdminTotalizacaoFamilia";
+import AdminTotalizacaoMarca from "./pages/AdminTotalizacaoMarca";
+import AdminTotalizacaoFornecedor from "./pages/AdminTotalizacaoFornecedor";
+import AdminLayout from "./components/AdminLayout";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminRelatorios from "./pages/AdminRelatorios";
+import AdminUsuarios from "./pages/AdminUsuarios";
+import AdminEtiquetas from "./pages/AdminEtiquetas";
+import AdminConfiguracoes from "./pages/AdminConfiguracoes";
+
+const user = { username: "admin" }; // Simulação de usuário logado
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -121,6 +134,38 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         />
         <Route path="/alertas/historico" element={<AlertasHistorico />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<RecoverPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        {/* <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminMenu />
+            </ProtectedRoute>
+          }
+        /> */}
+
+        {/* Rotas administrativas */}
+        <Route path="/admin" element={<AdminLayout user={user} />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="totais" element={<AdminMenu />} />
+          <Route path="relatorios" element={<AdminRelatorios />} />
+          <Route path="usuarios" element={<AdminUsuarios />} />
+          <Route path="etiquetas" element={<AdminEtiquetas />} />
+          <Route path="configuracoes" element={<AdminConfiguracoes />} />
+          <Route
+            path="totalizacao/familia"
+            element={<AdminTotalizacaoFamilia />}
+          />
+          <Route path="totalizacao/marca" element={<AdminTotalizacaoMarca />} />
+          <Route
+            path="totalizacao/fornecedor"
+            element={<AdminTotalizacaoFornecedor />}
+          />
+          <Route path="totalizacao" element={<AdminTotalizacao />} />
+          {/* /admin/totalizacao/produto */}
+          <Route path="totalizacao/produto" element={<AdminTotalizacao />} />
+        </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>

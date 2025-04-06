@@ -544,10 +544,62 @@ app.get("/produto/aggregate", async (req, res) => {
   }
 });
 
-app.post("/produto", async (req, res) => {
+// Rota para obter o próximo código
+app.get("/produto/proximo-codigo", async (req, res) => {
   try {
+    const result = await sql.query`
+      SELECT MAX(CODIGO) AS ultimoCodigo FROM PRODUTO
+    `;
+    const ultimoCodigo = Number(result.recordset[0].ultimoCodigo) || 0; // Retorna 0 se a tabela estiver vazia
+    const proximoCodigo = ultimoCodigo + 1;
+    res.json({ proximoCodigo });
+  } catch (err) {
+    console.error("Erro ao buscar próximo código:", err.message);
+    res.status(500).json({ error: "Erro ao buscar próximo código." });
+  }
+});
+
+// post para criar produto
+// app.post("/produto", async (req, res) => {
+//   try {
+//     const {
+//       CODIGO,
+//       CODIGO_INTERNO,
+//       DESCRICAO,
+//       CODIGO_BARRAS,
+//       ESTOQUE_MINIMO,
+//       ESTOQUE_ATUAL,
+//       CODIGO_MARCA,
+//       CODIGO_FAMILIA,
+//       VALOR_UNITARIO,
+//       COD_FORNECEDOR,
+//     } = req.body;
+//     const result =
+//       await sql.query`INSERT INTO PRODUTO (CODIGO, CODIGO_INTERNO, DESCRICAO, CODIGO_BARRAS, ESTOQUE_MINIMO, ESTOQUE_ATUAL, CODIGO_MARCA, CODIGO_FAMILIA, VALOR_UNITARIO, COD_FORNECEDOR) VALUES (${CODIGO}, ${CODIGO_INTERNO}, ${DESCRICAO}, ${CODIGO_BARRAS}, ${ESTOQUE_MINIMO}, ${ESTOQUE_ATUAL}, ${CODIGO_MARCA}, ${CODIGO_FAMILIA}, ${VALOR_UNITARIO}, ${COD_FORNECEDOR})`;
+//     res.status(201).send("Registro inserido com sucesso");
+//   } catch (err) {
+//     console.log("🚀 ~ app.post ~ err:", err);
+//     res.status(500).send("Erro ao inserir Produto");
+//   }
+// });
+
+// Rota para buscar produto por ID
+
+// Rota para criar um novo produto, pegando o id do ultimo registro
+app.post("/produto", async (req, res) => {
+  const transaction = new sql.Transaction();
+  try {
+    await transaction.begin();
+
+    // 1. Consultar o último código
+    const codigoResult = await transaction.request().query`
+      SELECT MAX(CODIGO) AS ultimoCodigo FROM PRODUTO
+    `;
+    const ultimoCodigo = Number(codigoResult.recordset[0].ultimoCodigo) || 0;
+    const novoCodigo = ultimoCodigo + 1;
+
+    // 2. Extrair os dados do corpo da requisição
     const {
-      CODIGO,
       CODIGO_INTERNO,
       DESCRICAO,
       CODIGO_BARRAS,
@@ -558,15 +610,45 @@ app.post("/produto", async (req, res) => {
       VALOR_UNITARIO,
       COD_FORNECEDOR,
     } = req.body;
-    const result =
-      await sql.query`INSERT INTO PRODUTO (CODIGO, CODIGO_INTERNO, DESCRICAO, CODIGO_BARRAS, ESTOQUE_MINIMO, ESTOQUE_ATUAL, CODIGO_MARCA, CODIGO_FAMILIA, VALOR_UNITARIO, COD_FORNECEDOR) VALUES (${CODIGO}, ${CODIGO_INTERNO}, ${DESCRICAO}, ${CODIGO_BARRAS}, ${ESTOQUE_MINIMO}, ${ESTOQUE_ATUAL}, ${CODIGO_MARCA}, ${CODIGO_FAMILIA}, ${COD_FORNECEDOR}, ${VALOR_UNITARIO})`;
-    res.status(201).send("Registro inserido com sucesso");
+
+    // 3. Inserir o novo produto com o código gerado
+    await transaction.request().query`
+      INSERT INTO PRODUTO (
+        CODIGO,
+        CODIGO_INTERNO,
+        DESCRICAO,
+        CODIGO_BARRAS,
+        ESTOQUE_MINIMO,
+        ESTOQUE_ATUAL,
+        CODIGO_MARCA,
+        CODIGO_FAMILIA,
+        VALOR_UNITARIO,
+        COD_FORNECEDOR
+      ) VALUES (
+        ${novoCodigo},
+        ${CODIGO_INTERNO},
+        ${DESCRICAO},
+        ${CODIGO_BARRAS},
+        ${ESTOQUE_MINIMO},
+        ${ESTOQUE_ATUAL},
+        ${CODIGO_MARCA},
+        ${CODIGO_FAMILIA},
+        ${VALOR_UNITARIO},
+        ${COD_FORNECEDOR}
+      )
+    `;
+
+    await transaction.commit();
+    res
+      .status(201)
+      .json({ message: "Produto criado com sucesso!", CODIGO: novoCodigo });
   } catch (err) {
-    res.status(500).send("Erro ao inserir Produto");
+    await transaction.rollback();
+    console.error("Erro ao criar produto:", err.message);
+    res.status(500).json({ error: "Erro ao criar produto." });
   }
 });
 
-// Rota para buscar produto por ID
 app.get("/produto/:id", async (req, res) => {
   try {
     const result =
@@ -1419,17 +1501,96 @@ app.put("/marca/:codigo", async (req, res) => {
   }
 });
 
-// Nova Rota para Valor Total do Estoque
+// // Nova Rota para Valor Total do Estoque
+// app.get("/estoque/valor-total", async (req, res) => {
+//   try {
+//     const result = await sql.query`
+//       SELECT SUM(ESTOQUE_ATUAL * VALOR_UNITARIO) AS ValorTotal
+//       FROM PRODUTO
+//     `;
+
+//     res.json({ valorTotal: result.recordset[0].ValorTotal || 0 });
+//   } catch (err) {
+//     res.status(500).json({ error: "Erro ao calcular valor do estoque" });
+//   }
+// });
+
+// Rota para calcular o valor total do estoque
 app.get("/estoque/valor-total", async (req, res) => {
   try {
     const result = await sql.query`
       SELECT SUM(ESTOQUE_ATUAL * VALOR_UNITARIO) AS ValorTotal
       FROM PRODUTO
     `;
-
-    res.json({ valorTotal: result.recordset[0].ValorTotal || 0 });
+    const valorTotal = result.recordset[0].ValorTotal || 0; // Caso não haja produtos, retorna 0
+    res.json({ valorTotal });
   } catch (err) {
-    res.status(500).json({ error: "Erro ao calcular valor do estoque" });
+    console.error("Erro ao calcular valor total do estoque:", err.message);
+    res.status(500).json({ error: "Erro ao calcular valor total do estoque." });
+  }
+});
+
+// Rota para calcular o valor total do estoque por marca
+app.get("/estoque/valor-total-por-marca", async (req, res) => {
+  try {
+    const result = await sql.query`
+      SELECT 
+        m.DESCRICAO AS Marca,
+        SUM(p.ESTOQUE_ATUAL * p.VALOR_UNITARIO) AS ValorTotal
+      FROM PRODUTO p
+      INNER JOIN MARCA_PRODUTO m ON p.CODIGO_MARCA = m.CODIGO
+      GROUP BY m.DESCRICAO
+    `;
+    res.json(result.recordset);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Erro ao calcular valor do estoque por marca" });
+  }
+});
+// teste
+// Rota para calcular o valor total do estoque por família
+app.get("/estoque/valor-total-por-familia", async (req, res) => {
+  try {
+    const resultfamilia = await sql.query`
+      SELECT 
+        f.DESCRICAO AS Familia,
+        SUM(p.ESTOQUE_ATUAL * p.VALOR_UNITARIO) AS ValorTotal
+      FROM PRODUTO p
+      INNER JOIN FAMILIA_PRODUTO f ON p.CODIGO_FAMILIA = f.CODIGO
+      WHERE p.ESTOQUE_ATUAL > 0 and p.VALOR_UNITARIO > 0
+      GROUP BY f.DESCRICAO
+    `;
+    console.log("Resultado da consulta:", resultfamilia.recordset);
+    res.json(resultfamilia.recordsets); // Retorna JSON válido
+    // produtos: produtos.recordset[0].total,
+  } catch (err) {
+    console.error(
+      "Erro ao calcular valor do estoque por família:",
+      err.message
+    );
+    res
+      .status(500)
+      .json({ error: "Erro ao calcular valor do estoque por família" });
+  }
+});
+
+// Rota para calcular o valor total do estoque por fornecedor
+app.get("/estoque/valor-total-por-fornecedor", async (req, res) => {
+  try {
+    const result = await sql.query`
+      SELECT 
+        f.NOME AS Fornecedor,
+        SUM(p.ESTOQUE_ATUAL * p.VALOR_UNITARIO) AS ValorTotal
+      FROM PRODUTO p
+      INNER JOIN FORNECEDOR f ON p.COD_FORNECEDOR = f.CODIGO
+      GROUP BY f.NOME
+    `;
+    res.json(result.recordset);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Erro ao calcular valor do estoque por fornecedor" });
   }
 });
 
@@ -1441,10 +1602,17 @@ app.get("/totais", async (req, res) => {
     const marcas = await sql.query`SELECT COUNT(*) AS total FROM MARCA_PRODUTO`;
     const familias =
       await sql.query`SELECT COUNT(*) AS total FROM FAMILIA_PRODUTO`;
+    const Fornecedores =
+      await sql.query`SELECT COUNT(*) AS total FROM FORNECEDOR`;
+    const valorTotal = await sql.query`
+      SELECT SUM(ESTOQUE_ATUAL * VALOR_UNITARIO) AS total FROM PRODUTO`;
     res.json({
       produtos: produtos.recordset[0].total,
       marcas: marcas.recordset[0].total,
       familias: familias.recordset[0].total,
+      fornecedores: Fornecedores.recordset[0].total,
+      movimentacoes: movimentacoes.recordset[0].total,
+      valorTotal: valorTotal.recordset[0].total,
     });
   } catch (err) {
     res.status(500).json({ error: "Erro ao buscar totais" });
@@ -1472,7 +1640,7 @@ app.get("/totais", async (req, res) => {
 
     res.json({
       produtos: totalProdutos.recordset[0]?.total || 0,
-      // movimentacoes: totalMovimentacoes.recordset[0]?.total || 0,
+      movimentacoes: totalMovimentacoes.recordset[0]?.total || 0,
       marcas: totalMarcas.recordset[0]?.total || 0,
       familias: totalFamilias.recordset[0]?.total || 0,
     });

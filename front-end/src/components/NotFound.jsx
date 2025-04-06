@@ -18,7 +18,7 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header title={"Página não encontrada !"} />
 
       <div className="container mx-auto px-6 py-8">
         <div className="max-w-3xl mx-auto text-center">

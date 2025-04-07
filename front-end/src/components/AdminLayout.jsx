@@ -1,8 +1,11 @@
 // src/components/AdminLayout.jsx
-import React from "react";
+import React, { useContext } from "react";
 import { Link, Outlet } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
-const AdminLayout = ({ user }) => {
+const AdminLayout = () => {
+  const { user } = useContext(AuthContext); // Acessa o usuário logado
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       {/* Header */}
@@ -29,7 +32,7 @@ const AdminLayout = ({ user }) => {
               to="/admin/etiquetas"
               className="hover:text-blue-300 transition-all"
             >
-              Gerar Etiquetas
+              Etiquetas
             </Link>
             <Link
               to="/admin/totalizacao"
@@ -41,7 +44,7 @@ const AdminLayout = ({ user }) => {
               to="/admin/configuracoes"
               className="hover:text-blue-300 transition-all"
             >
-              Configurações
+              Configuracoes
             </Link>
             <Link to="/" className="hover:text-blue-300 transition-all">
               Sair

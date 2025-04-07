@@ -1650,6 +1650,26 @@ app.get("/totais", async (req, res) => {
   }
 });
 
+// Relatórios
+app.get("/relatorios/marcas", async (req, res) => {
+  try {
+    const result = await sql.query`
+      SELECT 
+        mp.DESCRICAO AS Marca,
+        COUNT(p.CODIGO) AS TotalProdutos,
+        SUM(p.ESTOQUE_ATUAL * p.VALOR_UNITARIO) AS ValorTotalEstoque
+      FROM MARCA_PRODUTO mp
+      LEFT JOIN PRODUTO p ON mp.CODIGO = p.CODIGO_MARCA
+      GROUP BY mp.DESCRICAO
+      ORDER BY TotalProdutos DESC;
+    `;
+    res.json(result.recordset);
+  } catch (err) {
+    console.error("Erro ao gerar relatório de marcas:", err.message);
+    res.status(500).json({ error: "Erro ao gerar relatório de marcas." });
+  }
+});
+
 // Iniciar o servidor
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);

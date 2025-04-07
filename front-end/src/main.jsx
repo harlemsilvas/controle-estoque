@@ -10,6 +10,8 @@ import "./index.css";
 import Produtos from "./pages/Produtos";
 import ProdutoDetalhes from "./pages/ProdutoDetalhes";
 import ProdutoForm from "./pages/ProdutoForm";
+import { AuthProvider } from "./context/AuthContext";
+import PrivateRoute from "./components/PrivateRoute"; // Middleware para rotas protegidas
 import Dashboard from "./pages/Dashboard";
 import FamiliaProdutoPage from "./pages/FamiliaProdutoPage";
 import MarcaProdutoPage from "./pages/MarcaProdutoPage";
@@ -34,88 +36,90 @@ import AdminRelatorios from "./pages/AdminRelatorios";
 import AdminUsuarios from "./pages/AdminUsuarios";
 import AdminEtiquetas from "./pages/AdminEtiquetas";
 import AdminConfiguracoes from "./pages/AdminConfiguracoes";
+import AdminRelatorioMarcas from "./pages/AdminRelatorioMarcas";
 
-const user = { username: "admin" }; // Simulação de usuário logado
+// const user = { username: "admin" }; // Simulação de usuário logado
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <Router>
-      <Routes>
-        {/* Rotas públicas */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        {/* Rotas protegidas */}
-        {/* <Route path="/" element={<Home />} /> */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/produtos"
-          element={
-            <ProtectedRoute>
-              <Produtos />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/produto/:id"
-          element={
-            <ProtectedRoute>
-              <ProdutoDetalhes />
-            </ProtectedRoute>
-          }
-        />
-        {/* // Adicionar novas rotas */}
-        <Route path="/produto/novo" element={<ProdutoForm />} />
-        <Route
-          path="/produto/editar/:id"
-          element={
-            <ProtectedRoute>
-              <ProdutoForm />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route
-          path="/familias"
-          element={
-            <ProtectedRoute>
-              <FamiliaProdutoPage />
-            </ProtectedRoute>
-          }
-        />
-        {/* Rota para movimentação de estoque com histórico na tela*/}
-        <Route
-          path="/estoque/movimentacaohistorico"
-          element={
-            <ProtectedRoute>
-              <MovimentacaoEstoque />
-            </ProtectedRoute>
-          }
-        />
-        {/* Nova rota para movimentação de estoque */}
-        <Route
-          path="/estoque/movimentacao"
-          element={
-            <ProtectedRoute>
-              <NovaMovimentacaoEstoque />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/marcas"
-          element={
-            <ProtectedRoute>
-              <MarcaProdutoPage />
-            </ProtectedRoute>
-          }
-        />
-        {/* <Route
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Rotas públicas */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          {/* Rotas protegidas */}
+          {/* <Route path="/" element={<Home />} /> */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/produtos"
+            element={
+              <ProtectedRoute>
+                <Produtos />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/produto/:id"
+            element={
+              <ProtectedRoute>
+                <ProdutoDetalhes />
+              </ProtectedRoute>
+            }
+          />
+          {/* // Adicionar novas rotas */}
+          <Route path="/produto/novo" element={<ProdutoForm />} />
+          <Route
+            path="/produto/editar/:id"
+            element={
+              <ProtectedRoute>
+                <ProdutoForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route
+            path="/familias"
+            element={
+              <ProtectedRoute>
+                <FamiliaProdutoPage />
+              </ProtectedRoute>
+            }
+          />
+          {/* Rota para movimentação de estoque com histórico na tela*/}
+          <Route
+            path="/estoque/movimentacaohistorico"
+            element={
+              <ProtectedRoute>
+                <MovimentacaoEstoque />
+              </ProtectedRoute>
+            }
+          />
+          {/* Nova rota para movimentação de estoque */}
+          <Route
+            path="/estoque/movimentacao"
+            element={
+              <ProtectedRoute>
+                <NovaMovimentacaoEstoque />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/marcas"
+            element={
+              <ProtectedRoute>
+                <MarcaProdutoPage />
+              </ProtectedRoute>
+            }
+          />
+          {/* <Route
           path="/cadastro-fornecedor"
           element={
             <ProtectedRoute>
@@ -123,52 +127,62 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             </ProtectedRoute>
           }
         /> */}
-        <Route path="/produtos/lixeira" element={<LixeiraProdutos />} />
-        <Route
-          path="/fornecedores"
-          element={
-            <ProtectedRoute>
-              <FornecedorProdutoPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/alertas/historico" element={<AlertasHistorico />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<RecoverPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        {/* <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <AdminMenu />
-            </ProtectedRoute>
-          }
-        /> */}
+          <Route path="/produtos/lixeira" element={<LixeiraProdutos />} />
+          <Route
+            path="/fornecedores"
+            element={
+              <ProtectedRoute>
+                <FornecedorProdutoPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/alertas/historico" element={<AlertasHistorico />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<RecoverPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-        {/* Rotas administrativas */}
-        <Route path="/admin" element={<AdminLayout user={user} />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="totais" element={<AdminMenu />} />
-          <Route path="relatorios" element={<AdminRelatorios />} />
-          <Route path="usuarios" element={<AdminUsuarios />} />
-          <Route path="etiquetas" element={<AdminEtiquetas />} />
-          <Route path="configuracoes" element={<AdminConfiguracoes />} />
+          {/* Rotas administrativas */}
+          {/* <Route path="/admin" element={<AdminLayout user={user} />}> */}
+          {/* Rotas protegidas */}
           <Route
-            path="totalizacao/familia"
-            element={<AdminTotalizacaoFamilia />}
-          />
-          <Route path="totalizacao/marca" element={<AdminTotalizacaoMarca />} />
-          <Route
-            path="totalizacao/fornecedor"
-            element={<AdminTotalizacaoFornecedor />}
-          />
-          <Route path="totalizacao" element={<AdminTotalizacao />} />
-          {/* /admin/totalizacao/produto */}
-          <Route path="totalizacao/produto" element={<AdminTotalizacao />} />
-        </Route>
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Router>
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<AdminDashboard />} />
+            <Route path="totais" element={<AdminMenu />} />
+            <Route path="relatorios" element={<AdminRelatorios />} />
+            <Route path="usuarios" element={<AdminUsuarios />} />
+            <Route path="etiquetas" element={<AdminEtiquetas />} />
+            <Route path="configuracoes" element={<AdminConfiguracoes />} />
+            <Route
+              path="relatorios/marcas"
+              element={<AdminRelatorioMarcas />}
+            />
+            <Route
+              path="totalizacao/familia"
+              element={<AdminTotalizacaoFamilia />}
+            />
+            <Route
+              path="totalizacao/marca"
+              element={<AdminTotalizacaoMarca />}
+            />
+            <Route
+              path="totalizacao/fornecedor"
+              element={<AdminTotalizacaoFornecedor />}
+            />
+            <Route path="totalizacao" element={<AdminTotalizacao />} />
+            {/* /admin/totalizacao/produto */}
+            <Route path="totalizacao/produto" element={<AdminTotalizacao />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
+
     <ToastContainer
       position="bottom-right"
       autoClose={3000}

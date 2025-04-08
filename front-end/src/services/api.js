@@ -340,3 +340,14 @@ export const deleteFornecedor = async (codigo) => {
   const response = await api.delete(`/fornecedor/${codigo}`);
   return response.data;
 };
+
+export const aggregateProdutos = async () => {
+  try {
+    const response = await api.get("/produto-aggregate");
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      error.response?.data?.error || "Erro na busca de produtos/marcas"
+    );
+  }
+};

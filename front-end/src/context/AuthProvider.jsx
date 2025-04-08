@@ -1,10 +1,7 @@
-// src/context/AuthContext.jsx
-import React, { createContext, useState, useEffect } from "react";
+// src/context/AuthProvider.jsx
+import React, { useState, useEffect } from "react";
+import { AuthContext } from "./AuthContext";
 
-// Cria o contexto
-export const AuthContext = createContext();
-
-// Provedor de autenticação
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null); // Armazena o usuário logado
   const [loading, setLoading] = useState(true); // Estado de carregamento

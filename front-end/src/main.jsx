@@ -10,8 +10,7 @@ import "./index.css";
 import Produtos from "./pages/Produtos";
 import ProdutoDetalhes from "./pages/ProdutoDetalhes";
 import ProdutoForm from "./pages/ProdutoForm";
-import { AuthProvider } from "./context/AuthContext";
-import PrivateRoute from "./components/PrivateRoute"; // Middleware para rotas protegidas
+import { AuthProvider } from "./context/AuthProvider";
 import Dashboard from "./pages/Dashboard";
 import FamiliaProdutoPage from "./pages/FamiliaProdutoPage";
 import MarcaProdutoPage from "./pages/MarcaProdutoPage";
@@ -25,19 +24,18 @@ import RegisterPage from "./pages/RegisterPage";
 import RecoverPage from "./pages/RecoverPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import FornecedorProdutoPage from "./pages/FornecedorProdutoPage";
-import AdminMenu from "./pages/AdminMenu";
-import AdminTotalizacao from "./pages/AdminTotalizacao"; // Importe a página de totalização
-import AdminTotalizacaoFamilia from "./pages/AdminTotalizacaoFamilia";
-import AdminTotalizacaoMarca from "./pages/AdminTotalizacaoMarca";
-import AdminTotalizacaoFornecedor from "./pages/AdminTotalizacaoFornecedor";
-import AdminLayout from "./components/AdminLayout";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminRelatorios from "./pages/AdminRelatorios";
-import AdminUsuarios from "./pages/AdminUsuarios";
-import AdminEtiquetas from "./pages/AdminEtiquetas";
-import AdminConfiguracoes from "./pages/AdminConfiguracoes";
-import AdminRelatorioMarcas from "./pages/AdminRelatorioMarcas";
-
+import AdminMenu from "./pages/admin/AdminMenu";
+import AdminTotalizacao from "./pages/admin/AdminTotalizacao"; // Importe a página de totalização
+import AdminTotalizacaoFamilia from "./pages/admin/AdminTotalizacaoFamilia";
+import AdminTotalizacaoMarca from "./pages/admin/AdminTotalizacaoMarca";
+import AdminTotalizacaoFornecedor from "./pages/admin/AdminTotalizacaoFornecedor";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminRelatorios from "./pages/admin/AdminRelatorios";
+import AdminUsuarios from "./pages/admin/AdminUsuarios";
+import AdminEtiquetas from "./pages/admin/AdminEtiquetas";
+import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
+import AdminRelatorioMarcas from "./pages/admin/AdminRelatorioMarcas";
 // const user = { username: "admin" }; // Simulação de usuário logado
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -155,13 +153,14 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route index element={<AdminDashboard />} />
             <Route path="totais" element={<AdminMenu />} />
             <Route path="relatorios" element={<AdminRelatorios />} />
-            <Route path="usuarios" element={<AdminUsuarios />} />
-            <Route path="etiquetas" element={<AdminEtiquetas />} />
-            <Route path="configuracoes" element={<AdminConfiguracoes />} />
             <Route
               path="relatorios/marcas"
               element={<AdminRelatorioMarcas />}
             />
+            <Route path="usuarios" element={<AdminUsuarios />} />
+            <Route path="etiquetas" element={<AdminEtiquetas />} />
+            <Route path="configuracoes" element={<AdminConfiguracoes />} />
+
             <Route
               path="totalizacao/familia"
               element={<AdminTotalizacaoFamilia />}
@@ -198,12 +197,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     />
   </React.StrictMode>
 );
-
-// import './index.css'
-// import App from './App.jsx'
-
-// createRoot(document.getElementById('root')).render(
-//   <StrictMode>
-//     <App />
-//   </StrictMode>,
-// )

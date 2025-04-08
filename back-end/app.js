@@ -37,7 +37,7 @@ const jwt = require("jsonwebtoken");
 
 // Função para gerar token JWT
 const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "5s" });
+  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "10m" });
 };
 
 // Rota pública
@@ -286,28 +286,50 @@ app.get("/estoque-data", authenticateToken, async (req, res) => {
   }
 });
 
+// app.get("/produto-aggregate", async (req, res) => {
+//   try {
+//     const byMarca = await sql.query`
+//       SELECT
+//         mp.DESCRICAO AS marca,
+//         COUNT(*) AS TotalProdutos,
+//         SUM(p.VALOR_UNITARIO*p.ESTOQUE_ATUAL) AS ValorTotalEstoque
+//       FROM PRODUTO p
+//       JOIN MARCA_PRODUTO mp ON p.CODIGO_MARCA = mp.CODIGO
+//       GROUP BY mp.DESCRICAO
+//     `;
+//     res.json({ byMarca: byMarca.recordset });
+//   } catch (err) {
+//     console.error("Erro ao buscar dados agregados de produtos:", err.message);
+//     res
+//       .status(500)
+//       .json({ error: "Erro ao buscar dados agregados de produtos." });
+//   }
+// });
+
 app.get("/produto-aggregate", authenticateToken, async (req, res) => {
   try {
     // Por Família
     const byFamily = await sql.query`
-      SELECT 
-        fp.DESCRICAO AS familia, 
-        COUNT(*) AS total
-      FROM 
+      SELECT
+        fp.DESCRICAO AS familia,
+        COUNT(*) AS total,
+        SUM(p.VALOR_UNITARIO*p.ESTOQUE_ATUAL) AS ValorTotalEstoque
+      FROM
         PRODUTO p
-      JOIN 
+      JOIN
         FAMILIA_PRODUTO fp ON p.CODIGO_FAMILIA = fp.CODIGO
       GROUP BY fp.DESCRICAO
     `;
 
     // Por Marca
     const byMarca = await sql.query`
-      SELECT 
-        mp.DESCRICAO AS marca, 
-        COUNT(*) AS total
-      FROM 
+      SELECT
+        mp.DESCRICAO AS marca,
+        COUNT(*) AS total,
+        SUM(p.VALOR_UNITARIO*p.ESTOQUE_ATUAL) AS ValorTotalEstoque
+      FROM
         PRODUTO p
-      JOIN 
+      JOIN
         MARCA_PRODUTO mp ON p.CODIGO_MARCA = mp.CODIGO
       GROUP BY mp.DESCRICAO
     `;
@@ -513,36 +535,36 @@ app.get("/produto/estoque", async (req, res) => {
   }
 });
 
-// Rota para dados agregados
-app.get("/produto/aggregate", async (req, res) => {
-  try {
-    const byFamily = await sql.query`
-      SELECT TOP (10)
-        f.DESCRICAO AS FAMILIA,
-        SUM(p.ESTOQUE_ATUAL) AS total
-      FROM PRODUTO p
-      INNER JOIN FAMILIA_PRODUTO f ON p.CODIGO_FAMILIA = f.CODIGO
-      GROUP BY f.DESCRICAO
-      ORDER BY total DESC
-    `;
+// // Rota para dados agregados
+// app.get("/produto/aggregate", async (req, res) => {
+//   try {
+//     const byFamily = await sql.query`
+//       SELECT TOP (10)
+//         f.DESCRICAO AS FAMILIA,
+//         SUM(p.ESTOQUE_ATUAL) AS total
+//       FROM PRODUTO p
+//       INNER JOIN FAMILIA_PRODUTO f ON p.CODIGO_FAMILIA = f.CODIGO
+//       GROUP BY f.DESCRICAO
+//       ORDER BY total DESC
+//     `;
 
-    const byMarca = await sql.query`
-      SELECT TOP (10)
-        m.DESCRICAO AS MARCA,
-        SUM(p.ESTOQUE_ATUAL) AS total
-      FROM PRODUTO p
-      INNER JOIN MARCA_PRODUTO m ON p.CODIGO_MARCA = m.CODIGO
-      GROUP BY m.DESCRICAO
-    `;
+//     const byMarca = await sql.query`
+//       SELECT TOP (10)
+//         m.DESCRICAO AS MARCA,
+//         SUM(p.ESTOQUE_ATUAL) AS total
+//       FROM PRODUTO p
+//       INNER JOIN MARCA_PRODUTO m ON p.CODIGO_MARCA = m.CODIGO
+//       GROUP BY m.DESCRICAO
+//     `;
 
-    res.json({
-      byFamily: byFamily.recordset,
-      byMarca: byMarca.recordset,
-    });
-  } catch (err) {
-    res.status(500).send("Erro ao buscar dados agregados");
-  }
-});
+//     res.json({
+//       byFamily: byFamily.recordset,
+//       byMarca: byMarca.recordset,
+//     });
+//   } catch (err) {
+//     res.status(500).send("Erro ao buscar dados agregados");
+//   }
+// });
 
 // Rota para obter o próximo código
 app.get("/produto/proximo-codigo", async (req, res) => {
@@ -1552,7 +1574,7 @@ app.get("/estoque/valor-total-por-marca", async (req, res) => {
 // Rota para calcular o valor total do estoque por família
 app.get("/estoque/valor-total-por-familia", async (req, res) => {
   try {
-    const resultfamilia = await sql.query`
+    const result = await sql.query`
       SELECT 
         f.DESCRICAO AS Familia,
         SUM(p.ESTOQUE_ATUAL * p.VALOR_UNITARIO) AS ValorTotal
@@ -1561,9 +1583,8 @@ app.get("/estoque/valor-total-por-familia", async (req, res) => {
       WHERE p.ESTOQUE_ATUAL > 0 and p.VALOR_UNITARIO > 0
       GROUP BY f.DESCRICAO
     `;
-    console.log("Resultado da consulta:", resultfamilia.recordset);
-    res.json(resultfamilia.recordsets); // Retorna JSON válido
-    // produtos: produtos.recordset[0].total,
+    console.log("Resultado da consulta:", result.recordset);
+    res.json(result.recordset); // Retorna JSON válido
   } catch (err) {
     console.error(
       "Erro ao calcular valor do estoque por família:",

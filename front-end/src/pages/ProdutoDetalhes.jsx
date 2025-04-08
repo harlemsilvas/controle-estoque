@@ -23,7 +23,7 @@ const ProdutoDetalhes = () => {
       await deleteProduto(id);
       navigate("/produtos");
     } catch (error) {
-      alert("Erro ao excluir produto");
+      alert(error.message || "Erro ao excluir produto");
     }
   };
 

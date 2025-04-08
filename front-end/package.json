@@ -20,6 +20,7 @@
     "react-toastify": "^11.0.5",
     "recharts": "^2.15.1"
   },
+  "proxy": "http://localhost:3000",
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "@types/react": "^19.0.10",

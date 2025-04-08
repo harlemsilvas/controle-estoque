@@ -9,7 +9,7 @@ const AdminTotalizacao = () => {
 
   // Função para buscar o total geral
   useEffect(() => {
-    fetch("/estoque/valor-total")
+    fetch("http://localhost:3000/estoque/valor-total")
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Erro HTTP: ${response.status}`);
@@ -26,15 +26,15 @@ const AdminTotalizacao = () => {
 
   // Função para buscar totais por família
   useEffect(() => {
-    fetch("/estoque/valor-total-por-familia")
+    fetch("http://localhost:3000/estoque/valor-total-por-familia")
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Erro HTTP: ${response.status}`);
         }
         return response.json();
       })
-      .then((data) => {
-        setTotalPorFamilia(data || []);
+      .then((dataf) => {
+        setTotalPorFamilia(dataf || []);
       })
       .catch((error) => {
         console.error("Erro ao buscar total por família:", error);
@@ -43,15 +43,15 @@ const AdminTotalizacao = () => {
 
   // Função para buscar totais por marca
   useEffect(() => {
-    fetch("/estoque/valor-total-por-marca")
+    fetch("http://localhost:3000/estoque/valor-total-por-marca")
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Erro HTTP: ${response.status}`);
         }
         return response.json();
       })
-      .then((data) => {
-        setTotalPorMarca(data || []);
+      .then((datam) => {
+        setTotalPorMarca(datam || []);
       })
       .catch((error) => {
         console.error("Erro ao buscar total por marca:", error);
@@ -60,15 +60,15 @@ const AdminTotalizacao = () => {
 
   // Função para buscar totais por fornecedor
   useEffect(() => {
-    fetch("/estoque/valor-total-por-fornecedor")
+    fetch("http://localhost:3000/estoque/valor-total-por-fornecedor")
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Erro HTTP: ${response.status}`);
         }
         return response.json();
       })
-      .then((data) => {
-        setTotalPorFornecedor(data || []);
+      .then((datafo) => {
+        setTotalPorFornecedor(datafo || []);
       })
       .catch((error) => {
         console.error("Erro ao buscar total por fornecedor:", error);
@@ -112,7 +112,11 @@ const AdminTotalizacao = () => {
               <li key={index} className="flex justify-between items-center">
                 <span className="text-gray-600">{item.Marca}</span>
                 <span className="text-blue-600 font-medium">
-                  R$ {item.ValorTotal.toFixed(2)}
+                  R${" "}
+                  {typeof totalPorMarca === "number"
+                    ? totalPorMarca.toFixed(2)
+                    : "0.00"}
+                  {/* R$ {item.ValorTotal.toFixed(2)} */}
                 </span>
               </li>
             ))}
@@ -129,7 +133,11 @@ const AdminTotalizacao = () => {
               <li key={index} className="flex justify-between items-center">
                 <span className="text-gray-600">{item.Familia}</span>
                 <span className="text-blue-600 font-medium">
-                  R$ {item.ValorTotal.toFixed(2)}
+                  R${" "}
+                  {typeof totalPorFamilia === "number"
+                    ? totalPorFamilia.toFixed(2)
+                    : "0.00"}
+                  {/* R$ {item.ValorTotal.toFixed} */}
                 </span>
               </li>
             ))}
@@ -146,7 +154,11 @@ const AdminTotalizacao = () => {
               <li key={index} className="flex justify-between items-center">
                 <span className="text-gray-600">{item.Fornecedor}</span>
                 <span className="text-blue-600 font-medium">
-                  R$ {item.ValorTotal.toFixed(2)}
+                  R${" "}
+                  {typeof totalPorFornecedor === "number"
+                    ? totalPorFornecedor.toFixed(2)
+                    : "0.00"}
+                  {/* R$ {item.ValorTotal.toFixed(2)} */}
                 </span>
               </li>
             ))}

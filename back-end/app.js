@@ -10,7 +10,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
-//app.use(express.json());
+app.use(express.json());
 
 // Middleware para parsear JSON
 app.use(bodyParser.json());
@@ -56,56 +56,13 @@ app.get("/dashboard", authenticateToken, async (req, res) => {
   }
 });
 
-// app.post("/login", async (req, res) => {
-//   const { email, password } = req.body;
-
-//   try {
-//     // Buscar usuário pelo email
-//     const user = await sql.query`SELECT * FROM Users WHERE email = ${email}`;
-//     if (user.recordset.length === 0) {
-//       return res.status(401).json({ error: "Credenciais inválidas." });
-//     }
-
-//     const userData = user.recordset[0];
-
-//     // Comparar senhas
-//     const isMatch = await bcrypt.compare(password, userData.password_hash);
-//     if (!isMatch) {
-//       return res.status(401).json({ error: "Credenciais inválidas." });
-//     }
-
-//     // Gerar token JWT
-//     const token = generateToken(userData.id);
-
-//     res.json({
-//       message: "Login bem-sucedido!",
-//       token,
-//       user: {
-//         id: userData.id,
-//         username: userData.username,
-//         email: userData.email,
-//       },
-//     });
-//   } catch (err) {
-//     console.error("Erro ao fazer login:", err);
-//     res.status(500).json({ error: "Erro ao processar login." });
-//   }
-// });
-
-// Rota para registrar um novo usuário
-
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    console.log("Requisição recebida:", { email, password });
-
     // Buscar usuário pelo email
     const user = await sql.query`SELECT * FROM Users WHERE email = ${email}`;
-    console.log("Usuário encontrado no banco de dados:", user.recordset);
-
     if (user.recordset.length === 0) {
-      console.error("Erro: Usuário não encontrado para o email:", email);
       return res.status(401).json({ error: "Credenciais inválidas." });
     }
 
@@ -113,19 +70,12 @@ app.post("/login", async (req, res) => {
 
     // Comparar senhas
     const isMatch = await bcrypt.compare(password, userData.password_hash);
-    console.log("Senha válida?", isMatch);
-
     if (!isMatch) {
-      console.error("Erro: Senha inválida para o email:", email);
       return res.status(401).json({ error: "Credenciais inválidas." });
     }
 
     // Gerar token JWT
-    const token = jwt.sign({ userId: userData.id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
-
-    console.log("Login bem-sucedido. Token gerado:", token);
+    const token = generateToken(userData.id);
 
     res.json({
       message: "Login bem-sucedido!",
@@ -141,6 +91,62 @@ app.post("/login", async (req, res) => {
     res.status(500).json({ error: "Erro ao processar login." });
   }
 });
+
+// Rota para registrar um novo usuário
+
+// app.post("/login", async (req, res) => {
+//   const { email, password } = req.body;
+
+//   // Valide as credenciais do usuário
+//   const user = await User.findOne({ where: { email } });
+//   if (!user || !(await bcrypt.compare(password, user.password))) {
+//     return res.status(401).json({ error: "Credenciais inválidas." });
+//   }
+
+//   try {
+//     console.log("Requisição recebida:", { email, password });
+
+//     // Buscar usuário pelo email
+//     // const user = await sql.query`SELECT * FROM Users WHERE email = ${email}`;
+//     // console.log("Usuário encontrado no banco de dados:", user.recordset);
+
+//     if (user.recordset.length === 0) {
+//       console.error("Erro: Usuário não encontrado para o email:", email);
+//       return res.status(401).json({ error: "Credenciais inválidas." });
+//     }
+
+//     const userData = user.recordset[0];
+
+//     // Comparar senhas
+//     const isMatch = await bcrypt.compare(password, userData.password_hash);
+//     console.log("Senha válida?", isMatch);
+
+//     if (!isMatch) {
+//       console.error("Erro: Senha inválida para o email:", email);
+//       return res.status(401).json({ error: "Credenciais inválidas." });
+//     }
+
+//     // Gerar token JWT
+//     const token = jwt.sign({ userId: userData.id }, process.env.JWT_SECRET, {
+//       expiresIn: "1h",
+//     });
+
+//     console.log("Login bem-sucedido. Token gerado:", token);
+
+//     res.json({
+//       message: "Login bem-sucedido!",
+//       token,
+//       user: {
+//         id: userData.id,
+//         username: userData.username,
+//         email: userData.email,
+//       },
+//     });
+//   } catch (err) {
+//     console.error("Erro ao fazer login:", err);
+//     res.status(500).json({ error: "Erro ao processar login." });
+//   }
+// });
 
 app.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
@@ -234,11 +240,6 @@ app.post("/reset-password", async (req, res) => {
   }
 });
 
-// //middleware para proteger rotas autenticadas
-// app.get("/dashboard", authenticateToken, (req, res) => {
-//   res.json({ message: "Bem-vindo ao dashboard!", user: req.user });
-// });
-
 // Rotas para a tabela ESTOQUE_PRODUTO
 app.get("/estoque-produto", async (req, res) => {
   try {
@@ -306,7 +307,7 @@ app.get("/estoque-data", authenticateToken, async (req, res) => {
 //   }
 // });
 
-app.get("/produto-aggregate", authenticateToken, async (req, res) => {
+app.get("/produto-aggregate", async (req, res) => {
   try {
     // Por Família
     const byFamily = await sql.query`
@@ -536,35 +537,45 @@ app.get("/produto/estoque", async (req, res) => {
 });
 
 // // Rota para dados agregados
-// app.get("/produto/aggregate", async (req, res) => {
-//   try {
-//     const byFamily = await sql.query`
-//       SELECT TOP (10)
-//         f.DESCRICAO AS FAMILIA,
-//         SUM(p.ESTOQUE_ATUAL) AS total
-//       FROM PRODUTO p
-//       INNER JOIN FAMILIA_PRODUTO f ON p.CODIGO_FAMILIA = f.CODIGO
-//       GROUP BY f.DESCRICAO
-//       ORDER BY total DESC
-//     `;
+app.get("/produto/aggregate", async (req, res) => {
+  try {
+    const byFamily = await sql.query`
+      SELECT 
+        f.DESCRICAO AS FAMILIA,
+        SUM(p.ESTOQUE_ATUAL) AS total
+      FROM PRODUTO p
+      INNER JOIN FAMILIA_PRODUTO f ON p.CODIGO_FAMILIA = f.CODIGO
+      GROUP BY f.DESCRICAO
+      ORDER BY total DESC
+    `;
 
-//     const byMarca = await sql.query`
-//       SELECT TOP (10)
-//         m.DESCRICAO AS MARCA,
-//         SUM(p.ESTOQUE_ATUAL) AS total
-//       FROM PRODUTO p
-//       INNER JOIN MARCA_PRODUTO m ON p.CODIGO_MARCA = m.CODIGO
-//       GROUP BY m.DESCRICAO
-//     `;
+    const byMarca = await sql.query`
+      SELECT 
+        m.DESCRICAO AS MARCA,
+        SUM(p.ESTOQUE_ATUAL) AS total
+      FROM PRODUTO p
+      INNER JOIN MARCA_PRODUTO m ON p.CODIGO_MARCA = m.CODIGO
+      GROUP BY m.DESCRICAO
+    `;
 
-//     res.json({
-//       byFamily: byFamily.recordset,
-//       byMarca: byMarca.recordset,
-//     });
-//   } catch (err) {
-//     res.status(500).send("Erro ao buscar dados agregados");
-//   }
-// });
+    const byFornecedor = await sql.query`
+       SELECT 
+        m.NOME AS FORNECEDOR,
+        SUM(p.ESTOQUE_ATUAL) AS total
+      FROM PRODUTO p
+      INNER JOIN FORNECEDOR m ON p.COD_FORNECEDOR = m.CODIGO
+      GROUP BY m.NOME
+    `;
+
+    res.json({
+      byFamily: byFamily.recordset,
+      byMarca: byMarca.recordset,
+      byFornecedor: byFornecedor.recordset,
+    });
+  } catch (err) {
+    res.status(500).send("Erro ao buscar dados agregados");
+  }
+});
 
 // Rota para obter o próximo código
 app.get("/produto/proximo-codigo", async (req, res) => {
@@ -817,13 +828,73 @@ app.put("/produto/:id", async (req, res) => {
 //   }
 // });
 
-// rota-exclusao
+// rota-exclusao - desativada em 8-4-25
+// app.delete("/produto/:id", async (req, res) => {
+//   try {
+//     await sql.query`DELETE FROM PRODUTO WHERE CODIGO = ${req.params.id}`;
+//     res.send("Produto excluído com sucesso");
+//   } catch (err) {
+//     console.error("Erro ao excluir produto:", err.message);
+//     res.status(500).send("Erro ao excluir produto");
+//   }
+// });
+
+// rota-exclusao em cascata
 app.delete("/produto/:id", async (req, res) => {
+  const productId = req.params.id;
+
   try {
-    await sql.query`DELETE FROM PRODUTO WHERE CODIGO = ${req.params.id}`;
-    res.send("Produto excluído com sucesso");
+    // Verifica registros relacionados na tabela ESTOQUE_PRODUTO
+    const estoqueRecords = await sql.query`
+      SELECT * FROM ESTOQUE_PRODUTO WHERE CODIGO_PRODUTO = ${productId}
+    `;
+
+    if (estoqueRecords.recordset.length > 0) {
+      // Retorna os registros relacionados para o frontend
+      return res.status(200).json({
+        message: "Existem registros relacionados no estoque.",
+        relatedRecords: estoqueRecords.recordset,
+      });
+    }
+
+    // Se não houver registros relacionados, exclui o produto diretamente
+    await sql.query`
+      DELETE FROM PRODUTO WHERE CODIGO = ${productId}
+    `;
+
+    res.json({ message: "Produto excluído com sucesso." });
   } catch (err) {
-    res.status(500).send("Erro ao excluir produto");
+    console.error("Erro ao excluir produto:", err.message);
+    res.status(500).json({ error: "Erro ao excluir produto." });
+  }
+});
+
+// Nova rota para exclusão final (com registros relacionados)
+app.post("/produto/:id/excluir-tudo", async (req, res) => {
+  const productId = req.params.id;
+
+  try {
+    // Exclui os registros relacionados na tabela ESTOQUE_PRODUTO
+    await sql.query`
+      DELETE FROM ESTOQUE_PRODUTO WHERE CODIGO_PRODUTO = ${productId}
+    `;
+
+    // Exclui o produto na tabela PRODUTO
+    await sql.query`
+      DELETE FROM PRODUTO WHERE CODIGO = ${productId}
+    `;
+
+    res.json({
+      message: "Produto e registros relacionados excluídos com sucesso.",
+    });
+  } catch (err) {
+    console.error(
+      "Erro ao excluir produto e registros relacionados:",
+      err.message
+    );
+    res
+      .status(500)
+      .json({ error: "Erro ao excluir produto e registros relacionados." });
   }
 });
 
@@ -1580,9 +1651,9 @@ app.get("/estoque/valor-total-por-familia", async (req, res) => {
         SUM(p.ESTOQUE_ATUAL * p.VALOR_UNITARIO) AS ValorTotal
       FROM PRODUTO p
       INNER JOIN FAMILIA_PRODUTO f ON p.CODIGO_FAMILIA = f.CODIGO
-      WHERE p.ESTOQUE_ATUAL > 0 and p.VALOR_UNITARIO > 0
       GROUP BY f.DESCRICAO
     `;
+    // WHERE p.ESTOQUE_ATUAL > 0 and p.VALOR_UNITARIO > 0
     console.log("Resultado da consulta:", result.recordset);
     res.json(result.recordset); // Retorna JSON válido
   } catch (err) {
@@ -1651,12 +1722,15 @@ app.get("/totais", async (req, res) => {
       await sql.query`SELECT COUNT(*) AS total FROM MARCA_PRODUTO`;
     const totalFamilias =
       await sql.query`SELECT COUNT(*) AS total FROM FAMILIA_PRODUTO`;
+    const totalFornecedores =
+      await sql.query`SELECT COUNT(*) AS total FROM FORNECEDOR`;
 
     console.log("Dados obtidos:", {
       produtos: totalProdutos.recordset[0].total,
       movimentacoes: totalMovimentacoes.recordset[0].total,
       marcas: totalMarcas.recordset[0].total,
       familias: totalFamilias.recordset[0].total,
+      fornecedores: totalFornecedores.recordset[0].total,
     });
 
     res.json({
@@ -1671,7 +1745,7 @@ app.get("/totais", async (req, res) => {
   }
 });
 
-// Relatórios
+// Relatórios marcas
 app.get("/relatorios/marcas", async (req, res) => {
   try {
     const result = await sql.query`
@@ -1688,6 +1762,53 @@ app.get("/relatorios/marcas", async (req, res) => {
   } catch (err) {
     console.error("Erro ao gerar relatório de marcas:", err.message);
     res.status(500).json({ error: "Erro ao gerar relatório de marcas." });
+  }
+});
+
+// Relatórios Familias
+app.get("/relatorios/familias", async (req, res) => {
+  try {
+    const result = await sql.query`
+      SELECT 
+        mp.DESCRICAO AS Familia,
+        COUNT(p.CODIGO) AS TotalProdutos,
+        SUM(p.ESTOQUE_ATUAL * p.VALOR_UNITARIO) AS ValorTotalEstoque
+      FROM FAMILIA_PRODUTO mp
+      LEFT JOIN PRODUTO p ON mp.CODIGO = p.CODIGO_FAMILIA
+      GROUP BY mp.DESCRICAO
+      ORDER BY TotalProdutos DESC;
+    `;
+    res.json(result.recordset);
+  } catch (err) {
+    console.error("Erro ao gerar relatório de marcas:", err.message);
+    res.status(500).json({ error: "Erro ao gerar relatório de famílias." });
+  }
+});
+
+// Relatórios Familias
+app.get("/relatorios/fornecedores", async (req, res) => {
+  try {
+    const result = await sql.query`
+      SELECT 
+        mp.NOME AS Fornecedor,
+        COUNT(p.CODIGO) AS TotalProdutos,
+        SUM(p.ESTOQUE_ATUAL * p.VALOR_UNITARIO) AS ValorTotalEstoque
+      FROM FORNECEDOR mp
+      LEFT JOIN PRODUTO p ON mp.CODIGO = p.COD_FORNECEDOR
+      GROUP BY mp.NOME
+      ORDER BY TotalProdutos DESC;
+    `;
+
+    //     SELECT
+    //   f.NOME AS Fornecedor,
+    //   SUM(p.ESTOQUE_ATUAL * p.VALOR_UNITARIO) AS ValorTotal
+    // FROM PRODUTO p
+    // INNER JOIN FORNECEDOR f ON p.COD_FORNECEDOR = f.CODIGO
+    // GROUP BY f.NOME
+    res.json(result.recordset);
+  } catch (err) {
+    console.error("Erro ao gerar relatório de marcas:", err.message);
+    res.status(500).json({ error: "Erro ao gerar relatório de famílias." });
   }
 });
 

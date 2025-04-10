@@ -113,14 +113,25 @@ const AdminTotalizacao = () => {
                 <span className="text-gray-600">{item.Marca}</span>
                 <span className="text-blue-600 font-medium">
                   R${" "}
-                  {typeof totalPorMarca === "number"
-                    ? totalPorMarca.toFixed(2)
+                  {typeof item.ValorTotal === "number"
+                    ? item.ValorTotal.toFixed(2)
                     : "0.00"}
                   {/* R$ {item.ValorTotal.toFixed(2)} */}
                 </span>
               </li>
             ))}
           </ul>
+          {/* Totalizador */}
+          {/* <div className="mt-4 pt-2 border-t border-gray-200"></div> */}
+          {/* <div className="flex justify-between items-center font-semibold">
+            <span className="text-gray-800">Total:</span>
+            <span className="text-green-600">
+              R${" "}
+              {totalPorMarca
+                .reduce((acc, item) => acc + (item.ValorTotal || 0), 0)
+                .toFixed(2)}
+            </span>
+          </div> */}
         </div>
 
         {/* Card para Total por Família */}
@@ -134,14 +145,25 @@ const AdminTotalizacao = () => {
                 <span className="text-gray-600">{item.Familia}</span>
                 <span className="text-blue-600 font-medium">
                   R${" "}
-                  {typeof totalPorFamilia === "number"
-                    ? totalPorFamilia.toFixed(2)
+                  {typeof item.ValorTotal === "number"
+                    ? item.ValorTotal.toFixed(2)
                     : "0.00"}
                   {/* R$ {item.ValorTotal.toFixed} */}
                 </span>
               </li>
             ))}
           </ul>
+          {/* Totalizador */}
+          {/* <div className="mt-4 pt-2 border-t border-gray-200"></div> */}
+          {/* <div className="flex justify-between items-center font-semibold">
+            <span className="text-gray-800">Total:</span>
+            <span className="text-green-600">
+              R${" "}
+              {totalPorFamilia
+                .reduce((acc, item) => acc + (item.ValorTotal || 0), 0)
+                .toFixed(2)}
+            </span>
+          </div> */}
         </div>
 
         {/* Card para Total por Fornecedor */}
@@ -155,14 +177,25 @@ const AdminTotalizacao = () => {
                 <span className="text-gray-600">{item.Fornecedor}</span>
                 <span className="text-blue-600 font-medium">
                   R${" "}
-                  {typeof totalPorFornecedor === "number"
-                    ? totalPorFornecedor.toFixed(2)
+                  {typeof item.ValorTotal === "number"
+                    ? item.ValorTotal.toFixed(2)
                     : "0.00"}
                   {/* R$ {item.ValorTotal.toFixed(2)} */}
                 </span>
               </li>
             ))}
           </ul>
+          {/* Totalizador */}
+          {/* <div className="mt-4 pt-2 border-t border-gray-200"></div> */}
+          {/* <div className="flex justify-between items-center font-semibold">
+            <span className="text-gray-800">Total:</span>
+            <span className="text-green-600">
+              R${" "}
+              {totalPorFornecedor
+                .reduce((acc, item) => acc + (item.ValorTotal || 0), 0)
+                .toFixed(2)}
+            </span>
+          </div> */}
         </div>
       </section>
     </div>

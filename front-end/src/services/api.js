@@ -107,6 +107,11 @@ export const getEstoqueData = async () => {
   return response.data;
 };
 
+export const getPProdutoAggregate = async () => {
+  const response = await api.get("/produto-aggregate");
+  return response.data;
+};
+
 export const getProdutoAggregate = async () => {
   const response = await api.get("/produto/aggregate");
   return response.data;
@@ -341,13 +346,13 @@ export const deleteFornecedor = async (codigo) => {
   return response.data;
 };
 
-export const aggregateProdutos = async () => {
-  try {
-    const response = await api.get("/produto-aggregate");
-    return response.data;
-  } catch (error) {
-    throw new Error(
-      error.response?.data?.error || "Erro na busca de produtos/marcas"
-    );
-  }
-};
+// export const aggregateProdutos = async () => {
+//   try {
+//     const response = await api.get("/produto-aggregate");
+//     return response.data;
+//   } catch (error) {
+//     throw new Error(
+//       error.response?.data?.error || "Erro na busca de produtos/marcas"
+//     );
+//   }
+// };

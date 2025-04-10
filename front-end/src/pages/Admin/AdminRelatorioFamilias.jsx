@@ -1,6 +1,8 @@
+// Description: Componente React para exibir relatórios de produtos por família
+
 import React, { useEffect, useState } from "react";
 
-const AdminRelatorioMarcas = () => {
+const AdminRelatorioFamilias = () => {
   const [data, setData] = useState(null); // Estado para armazenar os dados da API
   const [loading, setLoading] = useState(true); // Estado para controlar o carregamento
   const [error, setError] = useState(null); // Estado para capturar erros
@@ -56,11 +58,43 @@ const AdminRelatorioMarcas = () => {
     <div className="p-8 bg-gray-100 min-h-screen">
       {/* Título */}
       <h1 className="text-2xl font-bold text-gray-800 mb-8">
-        Dados Agregados dos Produtos - Marcas
+        Dados Agregados dos Produtos - Familías
       </h1>
 
       {/* Exibição dos dados por Família */}
       <div className="mb-12">
+        <h2 className="text-xl font-semibold text-gray-700 mb-4">
+          Por Família
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white border border-gray-300">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="py-2 px-4 border-b">Família</th>
+                <th className="py-2 px-4 border-b">Qtde Total</th>
+                <th className="py-2 px-4 border-b">Valor Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.byFamily.map((item, index) => (
+                <tr key={index} className="hover:bg-gray-50">
+                  <td className="py-2 px-4 border-b">{item.familia}</td>
+                  <td className="py-2 px-4 border-b">{item.total}</td>
+                  <td className="py-2 px-4 border-b">
+                    {item.ValorTotalEstoque.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Exibição dos dados por Marca */}
+      {/* <div>
         <h2 className="text-xl font-semibold text-gray-700 mb-4">Por Marca</h2>
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white border border-gray-300">
@@ -87,9 +121,9 @@ const AdminRelatorioMarcas = () => {
             </tbody>
           </table>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
 
-export default AdminRelatorioMarcas;
+export default AdminRelatorioFamilias;

@@ -1,4 +1,5 @@
-// src/components/AdminMenu.jsx
+// src/components/AdminMenu.jsx Menu de relatórios totalizadores
+
 import React from "react";
 import { Link } from "react-router-dom";
 

@@ -1,4 +1,3 @@
-// src/pages/ProdutoDetalhes.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import Header from "../components/Header";
@@ -8,7 +7,7 @@ import {
   getFamilia,
   deleteProduto,
 } from "../services/api";
-import ConfirmationModal from "../components/ConfirmationModal";
+import { toastSuccess, toastError } from "../services/toast";
 
 const ProdutoDetalhes = () => {
   const { id } = useParams();
@@ -17,13 +16,51 @@ const ProdutoDetalhes = () => {
   const [familia, setFamilia] = useState("");
   const navigate = useNavigate();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [relatedRecords, setRelatedRecords] = useState([]); // Registros relacionados
 
+  // Função para verificar registros relacionados
   const handleDelete = async () => {
     try {
-      await deleteProduto(id);
-      navigate("/produtos");
+      const response = await deleteProduto(id);
+
+      if (response.relatedRecords) {
+        // Se houver registros relacionados, armazena-os e abre o modal
+        setRelatedRecords(response.relatedRecords);
+        setShowDeleteModal(true);
+      } else {
+        // Se não houver registros relacionados, exclui diretamente
+        navigate("/produtos");
+        toastSuccess("Produto excluído com sucesso!");
+      }
     } catch (error) {
-      alert(error.message || "Erro ao excluir produto");
+      toastError("Erro ao verificar registros relacionados.", error.message);
+    }
+  };
+
+  // Função para excluir tudo (produto e registros relacionados)
+  const confirmDelete = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/produto/${id}/excluir-tudo`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      if (response.ok) {
+        navigate("/produtos");
+        toastSuccess("Produto e registros relacionados excluídos com sucesso!");
+      } else {
+        throw new Error("Erro ao excluir produto e registros relacionados.");
+      }
+    } catch (error) {
+      toastError(
+        "Erro ao excluir produto e registros relacionados.",
+        error.message
+      );
+    } finally {
+      setShowDeleteModal(false); // Fecha o modal
     }
   };
 
@@ -99,36 +136,94 @@ const ProdutoDetalhes = () => {
                   {produto.ESTOQUE_MINIMO}
                 </p>
               </div>
+            </div>
 
-              {/* Inserção novo botão */}
-              <div className="mt-8 flex space-x-4">
-                <Link
-                  to={`/produto/editar/${produto.CODIGO}`}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Editar
-                </Link>
-                <button
-                  onClick={() => setShowDeleteModal(true)}
-                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                >
-                  Excluir
-                </button>
-              </div>
-
-              <ConfirmationModal
-                isOpen={showDeleteModal}
-                onClose={() => setShowDeleteModal(false)}
-                onConfirm={handleDelete}
-                title="Confirmar Exclusão"
-                message="Tem certeza que deseja excluir este produto permanentemente?"
-              />
-
-              {/* fim_insercao */}
+            {/* Botões de Ação */}
+            <div className="mt-8 flex space-x-4">
+              <Link
+                to={`/produto/editar/${produto.CODIGO}`}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Editar
+              </Link>
+              <button
+                onClick={handleDelete}
+                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Excluir
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Modal de Confirmação */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg w-full max-w-2xl p-6 shadow-lg overflow-y-auto max-h-[90vh]">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
+              Confirmação de Exclusão
+            </h2>
+            <p className="text-gray-700 mb-4">
+              Os seguintes registros relacionados serão excluídos:
+            </p>
+
+            {/* Grade de Registros Relacionados */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto">
+              {relatedRecords.map((record, index) => {
+                // Formatação dos campos
+                const formattedRecord = Object.entries(record).map(
+                  ([key, value]) => {
+                    const isDate =
+                      typeof value === "string" &&
+                      !isNaN(new Date(value).getTime()) &&
+                      value.trim() !== "";
+                    const formattedValue = isDate
+                      ? new Date(value).toLocaleDateString("pt-BR")
+                      : value;
+
+                    return (
+                      <li key={key}>
+                        <span className="font-medium">{key}:</span>{" "}
+                        {formattedValue}
+                      </li>
+                    );
+                  }
+                );
+
+                return (
+                  <div
+                    key={index}
+                    className="bg-gray-100 p-4 rounded-lg shadow-sm flex flex-col justify-between"
+                  >
+                    <h3 className="text-sm font-semibold text-gray-800">
+                      Registro #{index + 1}
+                    </h3>
+                    <ul className="text-xs text-gray-600 mt-2">
+                      {formattedRecord}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-6 flex justify-end space-x-4">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 rounded-md bg-red-500 text-white hover:bg-red-600 transition-colors"
+              >
+                Confirmar Exclusão
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

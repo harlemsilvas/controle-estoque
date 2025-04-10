@@ -23,9 +23,15 @@ const Header = ({ title, btnText, btnPath }) => {
 
   // Função para sair
   const handleLogout = () => {
-    localStorage.removeItem("token"); // Remove o token JWT
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     navigate("/login"); // Redireciona para a página de login
+    //window.location.href = "/login";
   };
+  // const handleLogout = () => {
+  // localStorage.removeItem("token"); // Remove o token JWT
+  //   navigate("/login"); // Redireciona para a página de login
+  // };
 
   return (
     <header className="bg-white shadow-lg">

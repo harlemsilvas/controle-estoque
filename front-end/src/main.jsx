@@ -29,13 +29,15 @@ import AdminTotalizacao from "./pages/admin/AdminTotalizacao"; // Importe a pág
 import AdminTotalizacaoFamilia from "./pages/admin/AdminTotalizacaoFamilia";
 import AdminTotalizacaoMarca from "./pages/admin/AdminTotalizacaoMarca";
 import AdminTotalizacaoFornecedor from "./pages/admin/AdminTotalizacaoFornecedor";
-import AdminLayout from "./components/admin/AdminLayout";
+import AdminLayout from "./components/Admin/AdminLayout"; // Importe o layout administrativo
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminRelatorios from "./pages/admin/AdminRelatorios";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminEtiquetas from "./pages/admin/AdminEtiquetas";
 import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
 import AdminRelatorioMarcas from "./pages/admin/AdminRelatorioMarcas";
+import AdminRelatorioFamilias from "./pages/Admin/AdminRelatorioFamilias";
+import AdminRelatorioFornecedores from "./pages/admin/AdminRelatorioFornecedores";
 // const user = { username: "admin" }; // Simulação de usuário logado
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -156,6 +158,14 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route
               path="relatorios/marcas"
               element={<AdminRelatorioMarcas />}
+            />
+            <Route
+              path="relatorios/fornecedores"
+              element={<AdminRelatorioFornecedores />}
+            />
+            <Route
+              path="relatorios/familias"
+              element={<AdminRelatorioFamilias />}
             />
             <Route path="usuarios" element={<AdminUsuarios />} />
             <Route path="etiquetas" element={<AdminEtiquetas />} />

@@ -7,10 +7,56 @@ const produtoService = {
       SELECT * FROM PRODUTO WHERE CODIGO_BARRAS = ${barcode}`;
     return result.recordset[0];
   },
-  async listarTodos() {
-    const result = await sql.query`
-      SELECT * FROM PRODUTO`;
-    return result.recordset;
+  async listarTodos({
+    offset = 0,
+    limit = 20,
+    fornecedor,
+    marca,
+    orderBy = 'CODIGO',
+    orderDir = 'ASC',
+  }: {
+    offset?: number;
+    limit?: number;
+    fornecedor?: string;
+    marca?: string;
+    orderBy?: string;
+    orderDir?: string;
+  } = {}) {
+    // Filtro dinâmico por fornecedor e marca
+    let where = '(DELETADO = 0 OR DELETADO IS NULL)';
+    if (fornecedor) {
+      where += ' AND COD_FORNECEDOR = @fornecedor';
+    }
+    if (marca) {
+      where += ' AND CODIGO_MARCA = @marca';
+    }
+    // Sanitização de campos de ordenação
+    const allowedOrderBy = ['CODIGO', 'DESCRICAO'];
+    const allowedOrderDir = ['ASC', 'DESC'];
+    const orderField = allowedOrderBy.includes(orderBy.toUpperCase())
+      ? orderBy.toUpperCase()
+      : 'CODIGO';
+    const orderDirection = allowedOrderDir.includes(orderDir.toUpperCase())
+      ? orderDir.toUpperCase()
+      : 'ASC';
+    // Consulta paginada
+    const query = `SELECT * FROM PRODUTO WHERE ${where} ORDER BY ${orderField} ${orderDirection} OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`;
+    const totalQuery = `SELECT COUNT(*) as total FROM PRODUTO WHERE ${where}`;
+    const request = new sql.Request()
+      .input('offset', sql.Int, offset)
+      .input('limit', sql.Int, limit);
+    if (fornecedor) request.input('fornecedor', sql.VarChar, fornecedor);
+    if (marca) request.input('marca', sql.VarChar, marca);
+    const produtosResult = await request.query(query);
+    const totalRequest = new sql.Request();
+    if (fornecedor) totalRequest.input('fornecedor', sql.VarChar, fornecedor);
+    if (marca) totalRequest.input('marca', sql.VarChar, marca);
+    const totalResult = await totalRequest.query(totalQuery);
+    const total = totalResult.recordset[0]?.total || 0;
+    return {
+      produtos: produtosResult.recordset,
+      total,
+    };
   },
   async aggregate() {
     // Por Família

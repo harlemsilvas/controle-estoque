@@ -18,44 +18,40 @@ const MODES = {
 
 const FornecedorProdutoPage = () => {
   const [fornecedores, setFornecedores] = useState([]);
-  const [filteredFornecedores, setFilteredFornecedores] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFornecedor, setSelectedFornecedor] = useState(null);
   const [mode, setMode] = useState(MODES.LIST);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [fornecedorToDelete, setFornecedorToDelete] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    loadFornecedores();
-  }, []);
+  const [showForceDeleteModal, setShowForceDeleteModal] = useState(false);
+  const [fornecedorForceDelete, setFornecedorForceDelete] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   const loadFornecedores = async () => {
     try {
-      const data = await getFornecedor();
-      if (!Array.isArray(data)) {
+      const data = await getFornecedor({ page, limit, search: searchQuery });
+      if (!data || !Array.isArray(data.data)) {
         throw new Error("Formato inválido de fornecedores recebido");
       }
-      setFornecedores(data);
+      setFornecedores(data.data);
+      setTotal(data.total || 0);
+      setTotalPages(data.totalPages || 1);
     } catch (error) {
       toastError(`Erro ao carregar fornecedores: ${error.message}`);
     }
   };
 
-  const filterFornecedores = useCallback(() => {
-    const lowerQuery = searchQuery.toLowerCase();
-    const filtered = fornecedores.filter((fornecedor) =>
-      fornecedor.NOME.toLowerCase().includes(lowerQuery)
-    );
-    setFilteredFornecedores(filtered);
-  }, [searchQuery, fornecedores]);
-
   useEffect(() => {
-    filterFornecedores();
-  }, [filterFornecedores]);
+    loadFornecedores();
+  }, [page, limit, searchQuery]);
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
+    setPage(1);
   };
 
   const handleSave = async (fornecedorData) => {
@@ -87,15 +83,41 @@ const FornecedorProdutoPage = () => {
   const handleDeleteConfirm = async () => {
     try {
       if (!fornecedorToDelete) return;
-
       await deleteFornecedor(fornecedorToDelete);
       toastSuccess("Fornecedor excluído com sucesso!");
       loadFornecedores();
     } catch (error) {
+      // Se erro 400 e código FK_PRODUTO_FORNECEDOR, mostrar modal de exclusão forçada
+      if (
+        error.response &&
+        error.response.status === 400 &&
+        error.response.data?.code === "FK_PRODUTO_FORNECEDOR"
+      ) {
+        setShowDeleteModal(false);
+        setFornecedorForceDelete(fornecedorToDelete);
+        setShowForceDeleteModal(true);
+        return;
+      }
       toastError(`Erro ao excluir fornecedor: ${error.message}`);
     } finally {
       setShowDeleteModal(false);
       setFornecedorToDelete(null);
+    }
+  };
+
+  const handleForceDeleteConfirm = async () => {
+    try {
+      if (!fornecedorForceDelete) return;
+      await deleteFornecedor(fornecedorForceDelete, true);
+      toastSuccess(
+        "Fornecedor excluído e produtos atualizados para fornecedor padrão!"
+      );
+      loadFornecedores();
+    } catch (error) {
+      toastError(`Erro ao excluir fornecedor (forçado): ${error.message}`);
+    } finally {
+      setShowForceDeleteModal(false);
+      setFornecedorForceDelete(null);
     }
   };
 
@@ -146,17 +168,17 @@ const FornecedorProdutoPage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredFornecedores.length === 0 ? (
+                  {fornecedores.length === 0 ? (
                     <tr>
                       <td
                         colSpan="3"
                         className="px-6 py-4 text-center text-gray-500"
                       >
-                        Nenhum fornecedor encontrada
+                        Nenhum fornecedor encontrado
                       </td>
                     </tr>
                   ) : (
-                    filteredFornecedores.map((fornecedor) => (
+                    fornecedores.map((fornecedor) => (
                       <tr key={fornecedor.CODIGO}>
                         <td className="px-6 py-4">{fornecedor.CODIGO}</td>
                         <td className="px-6 py-4">{fornecedor.NOME}</td>
@@ -167,7 +189,7 @@ const FornecedorProdutoPage = () => {
                               setMode(MODES.EDIT);
                             }}
                             className="text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            aria-label={`Editar família ${fornecedor.NOME}`}
+                            aria-label={`Editar fornecedor ${fornecedor.NOME}`}
                           >
                             Editar
                           </button>
@@ -177,7 +199,7 @@ const FornecedorProdutoPage = () => {
                               setShowDeleteModal(true);
                             }}
                             className="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500"
-                            aria-label={`Excluir família ${fornecedor.NOME}`}
+                            aria-label={`Excluir fornecedor ${fornecedor.NOME}`}
                           >
                             Excluir
                           </button>
@@ -187,6 +209,45 @@ const FornecedorProdutoPage = () => {
                   )}
                 </tbody>
               </table>
+            </div>
+            {/* Controles de paginação */}
+            <div className="flex justify-between items-center mt-4">
+              <span className="text-gray-600">
+                Página {page} de {totalPages} ({total} fornecedores)
+              </span>
+              <div className="space-x-2">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+                >
+                  Próxima
+                </button>
+              </div>
+              <div>
+                <label className="mr-2">Itens por página:</label>
+                <select
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="border rounded p-1"
+                >
+                  {[5, 10, 20, 50].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         ) : (
@@ -206,6 +267,15 @@ const FornecedorProdutoPage = () => {
           title="Confirmar Exclusão"
           message="Tem certeza que deseja excluir este fornecedor permanentemente?"
           confirmText="Excluir"
+          cancelText="Cancelar"
+        />
+        <ConfirmationModal
+          isOpen={showForceDeleteModal}
+          onClose={() => setShowForceDeleteModal(false)}
+          onConfirm={handleForceDeleteConfirm}
+          title="Excluir Fornecedor com Produtos Vinculados"
+          message="Existem produtos vinculados a este fornecedor. Deseja excluir mesmo assim? Todos os produtos desse fornecedor serão movidos para o fornecedor padrão (código 1)."
+          confirmText="Excluir Forçado"
           cancelText="Cancelar"
         />
       </div>

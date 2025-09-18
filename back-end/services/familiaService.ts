@@ -4,6 +4,22 @@ const familiaService = {
   async listarTodos() {
     return await familiaModel.getAll();
   },
+
+  async listarPaginado({
+    page = 1,
+    limit = 20,
+    search = '',
+    orderBy = 'DESCRICAO',
+    orderDir = 'asc',
+  }: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    orderBy?: string;
+    orderDir?: 'asc' | 'desc';
+  }) {
+    return await familiaModel.getAllPaged({ page, limit, search, orderBy, orderDir });
+  },
   async buscarPorCodigo(codigo: number) {
     const familia = await familiaModel.getById(codigo);
     if (!familia) throw new Error('Família não encontrada');
@@ -15,8 +31,12 @@ const familiaService = {
   async atualizar(codigo: number, data: any) {
     return await familiaModel.update(codigo, data);
   },
-  async remover(codigo: number) {
-    return await familiaModel.remove(codigo);
+  /**
+   * Remove uma família. Se houver produtos vinculados, lança erro amigável.
+   * Se for passado force=true, atualiza produtos para família padrão (1) e remove a família.
+   */
+  async remover(codigo: number, force = false) {
+    return await familiaModel.remove(codigo, force);
   },
 };
 

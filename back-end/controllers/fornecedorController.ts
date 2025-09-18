@@ -20,7 +20,18 @@ const fornecedorController = {
    */
   async listarTodos(req: Request, res: Response, next: NextFunction) {
     try {
-      const fornecedores = await fornecedorService.listarTodos();
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+      const search = req.query.search ? String(req.query.search) : '';
+      const orderBy = req.query.orderBy ? String(req.query.orderBy) : 'NOME';
+      const orderDir = req.query.orderDir === 'desc' ? 'desc' : 'asc';
+      const fornecedores = await fornecedorService.listarTodos({
+        page,
+        limit,
+        search,
+        orderBy,
+        orderDir,
+      });
       res.json(fornecedores);
     } catch (err) {
       next(err);
@@ -136,9 +147,18 @@ const fornecedorController = {
   async remover(req: Request, res: Response, next: NextFunction) {
     try {
       const codigo = parseInt(req.params.codigo, 10);
-      await fornecedorService.remover(codigo);
+      // Se vier ?force=true na query, faz remoção forçada
+      const force = req.query.force === 'true';
+      await fornecedorService.remover(codigo, force);
       res.status(204).send();
-    } catch (err) {
+    } catch (err: any) {
+      if (err.code === 'FK_PRODUTO_FORNECEDOR') {
+        return res.status(400).json({
+          message:
+            'Não é possível remover: existem produtos vinculados a este fornecedor. Para forçar a remoção, utilize a opção de exclusão forçada.',
+          code: err.code,
+        });
+      }
       next(err);
     }
   },

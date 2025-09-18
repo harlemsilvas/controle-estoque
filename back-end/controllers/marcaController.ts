@@ -20,8 +20,13 @@ const marcaController = {
    */
   async listarTodos(req: Request, res: Response, next: NextFunction) {
     try {
-      const marcas = await marcaService.listarTodos();
-      res.json(marcas);
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+      const search = req.query.search ? String(req.query.search) : '';
+      const orderBy = req.query.orderBy ? String(req.query.orderBy) : 'DESCRICAO';
+      const orderDir = req.query.orderDir === 'desc' ? 'desc' : 'asc';
+      const result = await marcaService.listarPaginado(page, limit, search, orderBy, orderDir);
+      res.json(result);
     } catch (err) {
       next(err);
     }
@@ -136,9 +141,18 @@ const marcaController = {
   async remover(req: Request, res: Response, next: NextFunction) {
     try {
       const codigo = parseInt(req.params.codigo, 10);
-      await marcaService.remover(codigo);
+      // Se vier ?force=true na query, faz remoção forçada
+      const force = req.query.force === 'true';
+      await marcaService.remover(codigo, force);
       res.status(204).send();
-    } catch (err) {
+    } catch (err: any) {
+      if (err.code === 'FK_PRODUTO_MARCA') {
+        return res.status(400).json({
+          message:
+            'Não é possível remover: existem produtos vinculados a esta marca. Para forçar a remoção, utilize a opção de exclusão forçada.',
+          code: err.code,
+        });
+      }
       next(err);
     }
   },

@@ -1,13 +1,69 @@
-import { Request, Response, NextFunction } from 'express';
 import familiaService from '../services/familiaService';
+import { Request, Response, NextFunction } from 'express';
 
-/**
- * @swagger
- * tags:
- *   name: Familia
- *   description: Operações relacionadas a famílias
- */
 const familiaController = {
+  /**
+   * @swagger
+   * /familia/paginado:
+   *   get:
+   *     summary: Lista famílias com paginação, busca e ordenação
+   *     tags: [Familia]
+   *     parameters:
+   *       - in: query
+   *         name: page
+   *         schema:
+   *           type: integer
+   *         required: false
+   *         description: Página
+   *       - in: query
+   *         name: limit
+   *         schema:
+   *           type: integer
+   *         required: false
+   *         description: Limite por página
+   *       - in: query
+   *         name: search
+   *         schema:
+   *           type: string
+   *         required: false
+   *         description: Busca por descrição
+   *       - in: query
+   *         name: orderBy
+   *         schema:
+   *           type: string
+   *         required: false
+   *         description: Campo para ordenar (CODIGO ou DESCRICAO)
+   *       - in: query
+   *         name: orderDir
+   *         schema:
+   *           type: string
+   *           enum: [asc, desc]
+   *         required: false
+   *         description: Direção da ordenação
+   *     responses:
+   *       200:
+   *         description: Lista paginada de famílias
+   */
+  listarPaginado: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const search = (req.query.search as string) || '';
+      const orderBy = (req.query.orderBy as string) || 'DESCRICAO';
+      const orderDir = (req.query.orderDir as string) === 'desc' ? 'desc' : 'asc';
+      const { data, total } = await familiaService.listarPaginado({
+        page,
+        limit,
+        search,
+        orderBy,
+        orderDir,
+      });
+      const totalPages = Math.ceil(total / limit) || 1;
+      res.json({ data, totalPages });
+    } catch (err) {
+      next(err);
+    }
+  },
   /**
    * @swagger
    * /familia:
@@ -18,7 +74,7 @@ const familiaController = {
    *       200:
    *         description: Lista de famílias
    */
-  async listarTodos(req: Request, res: Response, next: NextFunction) {
+  listarTodos: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const familias = await familiaService.listarTodos();
       res.json(familias);
@@ -45,7 +101,7 @@ const familiaController = {
    *       404:
    *         description: Família não encontrada
    */
-  async buscarPorCodigo(req: Request, res: Response, next: NextFunction) {
+  buscarPorCodigo: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const codigo = parseInt(req.params.codigo, 10);
       const familia = await familiaService.buscarPorCodigo(codigo);
@@ -72,7 +128,7 @@ const familiaController = {
    *       400:
    *         description: Erro de validação
    */
-  async criar(req: Request, res: Response, next: NextFunction) {
+  criar: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const novaFamilia = await familiaService.criar(req.body);
       res.status(201).json(novaFamilia);
@@ -105,7 +161,7 @@ const familiaController = {
    *       400:
    *         description: Erro de validação
    */
-  async atualizar(req: Request, res: Response, next: NextFunction) {
+  atualizar: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const codigo = parseInt(req.params.codigo, 10);
       const familiaAtualizada = await familiaService.atualizar(codigo, req.body);
@@ -133,12 +189,21 @@ const familiaController = {
    *       400:
    *         description: Erro ao remover
    */
-  async remover(req: Request, res: Response, next: NextFunction) {
+  remover: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const codigo = parseInt(req.params.codigo, 10);
-      await familiaService.remover(codigo);
+      // Se vier ?force=true na query, faz remoção forçada
+      const force = req.query.force === 'true';
+      await familiaService.remover(codigo, force);
       res.status(204).send();
-    } catch (err) {
+    } catch (err: any) {
+      if (err.code === 'FK_PRODUTO_FAMILIA') {
+        return res.status(400).json({
+          message:
+            'Não é possível remover: existem produtos vinculados a esta família. Para forçar a remoção, utilize a opção de exclusão forçada.',
+          code: err.code,
+        });
+      }
       next(err);
     }
   },

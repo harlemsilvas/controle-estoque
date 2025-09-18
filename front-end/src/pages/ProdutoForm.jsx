@@ -5,9 +5,9 @@ import {
   getProdutoById,
   getMarcas,
   getFamilias,
+  getFornecedor,
   createProduto,
-  updateProduto,
-  api,
+  updateProduto
 } from "../services/api";
 import { toastSuccess, toastError } from "../services/toast";
 import ProdutoFormComponent from "../components/ProdutoForm";
@@ -33,10 +33,10 @@ const ProdutoForm = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const marcasData = await getMarcas();
-      const familiasData = await getFamilias();
-      setMarcas(marcasData);
-      setFamilias(familiasData);
+      const marcasData = await getMarcas({ limit: 100, orderBy: 'DESCRICAO', orderDir: 'asc' });
+  const familiasData = await getFamilias();
+  setMarcas(Array.isArray(marcasData) ? marcasData : marcasData.data || []);
+  setFamilias(Array.isArray(familiasData) ? familiasData : familiasData.data || []);
       if (id) {
         try {
           const produtoData = await getProdutoById(id);
@@ -70,12 +70,12 @@ const ProdutoForm = () => {
       }
     };
     fetchData();
-  }, [id]);
+  }, [id, navigate]);
 
   useEffect(() => {
     const buscarFornecedores = async () => {
-      const response = await api.get("/fornecedor");
-      setFornecedores(response.data);
+      const fornecedoresData = await getFornecedor({ limit: 100, orderBy: 'NOME', orderDir: 'asc' });
+      setFornecedores(Array.isArray(fornecedoresData) ? fornecedoresData : fornecedoresData.data || []);
     };
     buscarFornecedores();
   }, []);

@@ -16,24 +16,28 @@ const ProdutoDetalhes = () => {
   const [familia, setFamilia] = useState("");
   const navigate = useNavigate();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSimpleDeleteModal, setShowSimpleDeleteModal] = useState(false);
   const [relatedRecords, setRelatedRecords] = useState([]); // Registros relacionados
 
   // Função para verificar registros relacionados
-  const handleDelete = async () => {
+  const handleDelete = () => {
+    setShowSimpleDeleteModal(true);
+  };
+
+  const confirmSimpleDelete = async () => {
     try {
       const response = await deleteProduto(id);
-
       if (response.relatedRecords) {
-        // Se houver registros relacionados, armazena-os e abre o modal
         setRelatedRecords(response.relatedRecords);
         setShowDeleteModal(true);
       } else {
-        // Se não houver registros relacionados, exclui diretamente
         navigate("/produtos");
         toastSuccess("Produto excluído com sucesso!");
       }
     } catch (error) {
-      toastError("Erro ao verificar registros relacionados.", error.message);
+      toastError("Erro ao excluir produto.", error.message);
+    } finally {
+      setShowSimpleDeleteModal(false);
     }
   };
 
@@ -71,12 +75,20 @@ const ProdutoDetalhes = () => {
 
       if (produtoData.CODIGO_MARCA) {
         const marcaData = await getMarca(produtoData.CODIGO_MARCA);
-        setMarca(marcaData.DESCRICAO);
+        setMarca(
+          marcaData && marcaData.DESCRICAO ? marcaData.DESCRICAO : "N/A"
+        );
+      } else {
+        setMarca("N/A");
       }
 
       if (produtoData.CODIGO_FAMILIA) {
         const familiaData = await getFamilia(produtoData.CODIGO_FAMILIA);
-        setFamilia(familiaData.DESCRICAO);
+        setFamilia(
+          familiaData && familiaData.DESCRICAO ? familiaData.DESCRICAO : "N/A"
+        );
+      } else {
+        setFamilia("N/A");
       }
     };
     fetchData();
@@ -141,6 +153,12 @@ const ProdutoDetalhes = () => {
             {/* Botões de Ação */}
             <div className="mt-8 flex space-x-4">
               <Link
+                to="/produtos"
+                className="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500"
+              >
+                Voltar
+              </Link>
+              <Link
                 to={`/produto/editar/${produto.CODIGO}`}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
@@ -153,6 +171,33 @@ const ProdutoDetalhes = () => {
                 Excluir
               </button>
             </div>
+            {/* Modal de confirmação simples para qualquer exclusão */}
+            {showSimpleDeleteModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div className="bg-white rounded-lg w-full max-w-md p-6 shadow-lg">
+                  <h2 className="text-xl font-bold text-gray-800 mb-4">
+                    Confirmar Exclusão
+                  </h2>
+                  <p className="text-gray-700 mb-6">
+                    Tem certeza que deseja excluir este produto?
+                  </p>
+                  <div className="flex justify-end space-x-4">
+                    <button
+                      onClick={() => setShowSimpleDeleteModal(false)}
+                      className="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={confirmSimpleDelete}
+                      className="px-4 py-2 rounded-md bg-red-500 text-white hover:bg-red-600 transition-colors"
+                    >
+                      Confirmar Exclusão
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

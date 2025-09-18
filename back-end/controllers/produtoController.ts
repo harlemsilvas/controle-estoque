@@ -68,8 +68,34 @@ const produtoController = {
    */
   async listarTodos(req: Request, res: Response, next: NextFunction) {
     try {
-      const produtos = await produtoService.listarTodos();
-      res.json(produtos);
+      // Obter parâmetros de paginação, filtro e ordenação da query string
+      const page = parseInt(req.query.page as string, 10) || 1;
+      const limit = parseInt(req.query.limit as string, 10) || 20;
+      const offset = (page - 1) * limit;
+
+      const fornecedor = req.query.fornecedor as string | undefined;
+      const marca = req.query.marca as string | undefined;
+      const orderBy = (req.query.orderBy as string) || 'CODIGO';
+      const orderDir =
+        ((req.query.orderDir as string) || 'asc').toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+
+      // Buscar produtos paginados, filtrando e ordenando
+      const { produtos, total } = await produtoService.listarTodos({
+        offset,
+        limit,
+        fornecedor,
+        marca,
+        orderBy,
+        orderDir,
+      });
+
+      res.json({
+        data: produtos,
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      });
     } catch (err) {
       next(err);
     }

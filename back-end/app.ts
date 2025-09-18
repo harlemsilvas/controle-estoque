@@ -1,5 +1,4 @@
 // ...existing code...
-import estoqueController from './controllers/estoqueController';
 import express from 'express';
 import cors from 'cors';
 import sql from 'mssql';
@@ -9,6 +8,7 @@ import swaggerJSDoc from 'swagger-jsdoc';
 import errorHandler from './middleware/errorHandler';
 // Controllers
 import produtoController from './controllers/produtoController';
+import estoqueController from './controllers/estoqueController';
 import fornecedorController from './controllers/fornecedorController';
 import marcaController from './controllers/marcaController';
 import familiaController from './controllers/familiaController';
@@ -115,6 +115,7 @@ marcaRouter.delete('/:codigo', marcaController.remover);
 app.use('/marca', marcaRouter);
 
 // Família
+familiaRouter.get('/paginado', familiaController.listarPaginado);
 familiaRouter.get('/', familiaController.listarTodos);
 familiaRouter.get('/:codigo', familiaController.buscarPorCodigo);
 familiaRouter.post('/', familiaController.criar);

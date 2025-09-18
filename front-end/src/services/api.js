@@ -45,8 +45,25 @@ export const getTotais = async () => {
 //   }
 // };
 
-export const getProdutos = async () => {
-  const response = await api.get("/produto");
+// Novo: aceita params para paginação, filtro e ordenação
+export const getProdutos = async ({
+  page = 1,
+  limit = 20,
+  fornecedor,
+  marca,
+  orderBy = "CODIGO",
+  orderDir = "asc",
+} = {}) => {
+  const response = await api.get("/produto", {
+    params: {
+      page,
+      limit,
+      fornecedor,
+      marca,
+      orderBy,
+      orderDir,
+    },
+  });
   return response.data;
 };
 
@@ -63,7 +80,11 @@ export const getProdutoById = async (id) => {
 
 export const getMarca = async (codigoMarca) => {
   const response = await api.get(`/marca/${codigoMarca}`);
-  return response.data[0];
+  // Se vier array, retorna o primeiro, senão retorna o objeto direto
+  if (Array.isArray(response.data)) {
+    return response.data[0];
+  }
+  return response.data;
 };
 
 export const getmarca = async (codigomarca) => {
@@ -73,16 +94,32 @@ export const getmarca = async (codigomarca) => {
 
 export const getFamilia = async (codigoFamilia) => {
   const response = await api.get(`/familia/${codigoFamilia}`);
-  return response.data[0];
-};
-
-export const getFamilias = async () => {
-  const response = await api.get("/familia");
+  if (Array.isArray(response.data)) {
+    return response.data[0];
+  }
   return response.data;
 };
 
-export const getMarcas = async () => {
-  const response = await api.get("/marca");
+// export const getFamilias = async () => {
+//   const response = await api.get("/familia");
+//   return response.data;
+// };
+
+export async function getFamilias(params) {
+  const response = await api.get("/familia/paginado", { params });
+  return response.data;
+}
+
+export const getMarcas = async ({
+  page = 1,
+  limit = 10,
+  search = "",
+  orderBy = "DESCRICAO",
+  orderDir = "asc",
+} = {}) => {
+  const response = await api.get("/marca", {
+    params: { page, limit, search, orderBy, orderDir },
+  });
   return response.data;
 };
 
@@ -225,9 +262,17 @@ export const registrarMovimentacao = async (data) => {
   return response.data;
 };
 
-//Fornecedores
-export const getFornecedor = async () => {
-  const response = await api.get("/fornecedor");
+// Fornecedores paginados
+export const getFornecedor = async ({
+  page = 1,
+  limit = 10,
+  search = "",
+  orderBy = "NOME",
+  orderDir = "asc",
+} = {}) => {
+  const response = await api.get("/fornecedor", {
+    params: { page, limit, search, orderBy, orderDir },
+  });
   return response.data;
 };
 
@@ -241,8 +286,11 @@ export const updateFornecedor = async (codigo, fornecedor) => {
   return response.data;
 };
 
-export const deleteFornecedor = async (codigo) => {
-  const response = await api.delete(`/fornecedor/${codigo}`);
+export const deleteFornecedor = async (codigo, force = false) => {
+  const url = force
+    ? `/fornecedor/${codigo}?force=true`
+    : `/fornecedor/${codigo}`;
+  const response = await api.delete(url);
   return response.data;
 };
 
@@ -270,12 +318,14 @@ export const getAlertasHistorico = async () => {
   const response = await api.get("/alertas/historico");
   return response.data;
 };
-export const deleteMarca = async (codigo) => {
-  const response = await api.delete(`/marca/${codigo}`);
+export const deleteMarca = async (codigo, force = false) => {
+  const url = force ? `/marca/${codigo}?force=true` : `/marca/${codigo}`;
+  const response = await api.delete(url);
   return response.data;
 };
-export const deleteFamilia = async (codigo) => {
-  const response = await api.delete(`/familia/${codigo}`);
+export const deleteFamilia = async (codigo, force = false) => {
+  const url = force ? `/familia/${codigo}?force=true` : `/familia/${codigo}`;
+  const response = await api.delete(url);
   return response.data;
 };
 export const createFamilia = async (familia) => {

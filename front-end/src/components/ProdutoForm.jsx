@@ -1,5 +1,7 @@
 // Formulário de produto extraído de pages para components
 import React from "react";
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
 
 const ProdutoForm = ({
   formData,
@@ -65,35 +67,82 @@ const ProdutoForm = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-gray-700 mb-2">Marca</label>
-                <select
-                  name="CODIGO_MARCA"
-                  value={formData.CODIGO_MARCA}
-                  onChange={onChange}
-                  className="w-full px-4 py-2 border rounded-lg"
-                >
-                  <option value="">Selecione uma marca</option>
-                  {marcas.map((marca) => (
-                    <option key={marca.CODIGO} value={marca.CODIGO}>
-                      {marca.DESCRICAO}
-                    </option>
-                  ))}
-                </select>
+                <Autocomplete
+                  options={marcas}
+                  getOptionLabel={(option) =>
+                    option.DESCRICAO || option.nome || ""
+                  }
+                  isOptionEqualToValue={(option, value) =>
+                    (option.CODIGO || option.id || option.codigo) ===
+                    (value.CODIGO || value.id || value.codigo)
+                  }
+                  value={
+                    marcas.find(
+                      (m) =>
+                        (m.CODIGO || m.id || m.codigo) === formData.CODIGO_MARCA
+                    ) || null
+                  }
+                  onChange={(_, newValue) => {
+                    onChange({
+                      target: {
+                        name: "CODIGO_MARCA",
+                        value: newValue
+                          ? newValue.CODIGO || newValue.id || newValue.codigo
+                          : "",
+                      },
+                    });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Marca"
+                      placeholder="Buscar marca..."
+                      size="small"
+                    />
+                  )}
+                  clearOnEscape
+                  noOptionsText="Nenhuma marca encontrada"
+                />
               </div>
               <div>
                 <label className="block text-gray-700 mb-2">Família</label>
-                <select
-                  name="CODIGO_FAMILIA"
-                  value={formData.CODIGO_FAMILIA}
-                  onChange={onChange}
-                  className="w-full px-4 py-2 border rounded-lg"
-                >
-                  <option value="">Selecione uma família</option>
-                  {familias.map((familia) => (
-                    <option key={familia.CODIGO} value={familia.CODIGO}>
-                      {familia.DESCRICAO}
-                    </option>
-                  ))}
-                </select>
+                <Autocomplete
+                  options={familias}
+                  getOptionLabel={(option) =>
+                    option.DESCRICAO || option.nome || ""
+                  }
+                  isOptionEqualToValue={(option, value) =>
+                    (option.CODIGO || option.id || option.codigo) ===
+                    (value.CODIGO || value.id || value.codigo)
+                  }
+                  value={
+                    familias.find(
+                      (f) =>
+                        (f.CODIGO || f.id || f.codigo) ===
+                        formData.CODIGO_FAMILIA
+                    ) || null
+                  }
+                  onChange={(_, newValue) => {
+                    onChange({
+                      target: {
+                        name: "CODIGO_FAMILIA",
+                        value: newValue
+                          ? newValue.CODIGO || newValue.id || newValue.codigo
+                          : "",
+                      },
+                    });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Família"
+                      placeholder="Buscar família..."
+                      size="small"
+                    />
+                  )}
+                  clearOnEscape
+                  noOptionsText="Nenhuma família encontrada"
+                />
               </div>
             </div>
 
@@ -127,19 +176,41 @@ const ProdutoForm = ({
               </div>
               <div>
                 <label className="block text-gray-700 mb-2">Fornecedor</label>
-                <select
-                  name="COD_FORNECEDOR"
-                  value={formData.COD_FORNECEDOR}
-                  onChange={onChange}
-                  className="w-full px-4 py-2 border rounded-lg"
-                >
-                  <option value="">Selecione...</option>
-                  {fornecedores.map((fornecedor) => (
-                    <option key={fornecedor.CODIGO} value={fornecedor.CODIGO}>
-                      {fornecedor.NOME}
-                    </option>
-                  ))}
-                </select>
+                <Autocomplete
+                  options={fornecedores}
+                  getOptionLabel={(option) => option.NOME || option.nome || ""}
+                  isOptionEqualToValue={(option, value) =>
+                    (option.CODIGO || option.id || option.codigo) ===
+                    (value.CODIGO || value.id || value.codigo)
+                  }
+                  value={
+                    fornecedores.find(
+                      (f) =>
+                        (f.CODIGO || f.id || f.codigo) ===
+                        formData.COD_FORNECEDOR
+                    ) || null
+                  }
+                  onChange={(_, newValue) => {
+                    onChange({
+                      target: {
+                        name: "COD_FORNECEDOR",
+                        value: newValue
+                          ? newValue.CODIGO || newValue.id || newValue.codigo
+                          : "",
+                      },
+                    });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Fornecedor"
+                      placeholder="Buscar fornecedor..."
+                      size="small"
+                    />
+                  )}
+                  clearOnEscape
+                  noOptionsText="Nenhum fornecedor encontrado"
+                />
               </div>
               <div>
                 <label className="block text-gray-700 mb-2">

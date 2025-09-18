@@ -52,6 +52,16 @@ const AdminRelatorioFornecedores = () => {
     );
   }
 
+  // Mapeamento para camelCase
+  const byFornecedor = (data?.byFornecedor || []).map((item) => ({
+    fornecedor: item.FORNECEDOR || item.fornecedor,
+    total: item.total,
+    valorTotalEstoque:
+      item.ValorTotalEstoque ||
+      item.valortotalestoque ||
+      item.valorTotalEstoque,
+  }));
+
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
       {/* Título */}
@@ -59,7 +69,7 @@ const AdminRelatorioFornecedores = () => {
         Dados Agregados dos Produtos - Fornecedores
       </h1>
 
-      {/* Exibição dos dados por Família */}
+      {/* Exibição dos dados por Fornecedor */}
       <div className="mb-12">
         <h2 className="text-xl font-semibold text-gray-700 mb-4">
           Por Fornecedor
@@ -74,19 +84,37 @@ const AdminRelatorioFornecedores = () => {
               </tr>
             </thead>
             <tbody>
-              {data.byFornecedor.map((item, index) => (
+              {byFornecedor.map((item, index) => (
                 <tr key={index} className="hover:bg-gray-50">
-                  <td className="py-2 px-4 border-b">{item.fornecedor}</td>
-                  <td className="py-2 px-4 border-b">{item.total}</td>
-                  <td className="py-2 px-4 border-b">
-                    {item.ValorTotalEstoque.toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    })}
+                  <td className="py-2 px-4 border-b w-[60%] text-left">
+                    {item.fornecedor}
+                  </td>
+                  <td className="py-2 px-4 border-b w-[60%] text-left">
+                    {item.total}
+                  </td>
+                  <td className="py-2 px-4 border-b w-[60%] text-right">
+                    R$ {item.valorTotalEstoque?.toFixed(2)}
                   </td>
                 </tr>
               ))}
             </tbody>
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="py-2 px-4 border-b w-[60%] text-left">
+                  Total de Produtos:
+                </th>
+                <th className="py-2 px-4 border-b w-[20%] text-left"></th>
+                <th className="py-2 px-6 border-b w-[60%] text-right">
+                  R${" "}
+                  {byFornecedor
+                    .reduce(
+                      (acc, item) => acc + (item.valorTotalEstoque || 0),
+                      0
+                    )
+                    .toFixed(2)}
+                </th>
+              </tr>
+            </thead>
           </table>
         </div>
       </div>

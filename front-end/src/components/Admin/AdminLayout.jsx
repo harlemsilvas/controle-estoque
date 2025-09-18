@@ -1,10 +1,12 @@
 // src/components/admin/AdminLayout.jsx
 import React, { useContext, useState } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext.js";
+import { AuthContext } from "../../context/AuthContext.jsx"; // Ajuste o caminho conforme necessário
+import { useAuth } from "../../hooks/useAuth";
 
 const AdminLayout = () => {
-  const { user, logout } = useContext(AuthContext);
+  const { logout } = useContext(AuthContext); // Contexto de autenticação
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [isReportsOpen, setIsReportsOpen] = useState(false); // Estado para controlar o dropdown
 
@@ -12,6 +14,10 @@ const AdminLayout = () => {
     logout();
     navigate("/");
   };
+
+  if (!user) {
+    return <div>Carregando...</div>; // Exibe um indicador de carregamento
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
@@ -21,10 +27,9 @@ const AdminLayout = () => {
           <h1 className="text-2xl font-bold">Painel Administrativo</h1>
           <nav className="flex space-x-6 items-center">
             {/* Dashboard */}
-            <Link to="/admin" className="hover:text-blue-300 transition-all">
+            <Link to="/Admin" className="hover:text-blue-300 transition-all">
               Dashboard
             </Link>
-
             {/* Dropdown de Relatórios */}
             <div
               className="relative"
@@ -64,7 +69,6 @@ const AdminLayout = () => {
                 </div>
               )}
             </div>
-
             {/* Demais Links */}
             <Link
               to="/admin/usuarios"
@@ -90,7 +94,6 @@ const AdminLayout = () => {
             >
               Configurações
             </Link>
-
             {/* Botão Sair */}
             <button
               onClick={handleLogout}

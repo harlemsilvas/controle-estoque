@@ -61,7 +61,15 @@ const LoginPage = () => {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl">
         <div className="text-center">
-          <LockClosedIcon className="mx-auto h-12 w-12 text-blue-600 animate-bounce" />
+          <LockClosedIcon
+            className="mx-auto h-12 w-12 text-blue-600 animate-bounce"
+            style={{
+              width: 48,
+              height: 48,
+              maxWidth: "none",
+              maxHeight: "none",
+            }}
+          />
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Acesse sua conta
           </h2>

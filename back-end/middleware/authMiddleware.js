@@ -16,6 +16,7 @@ const authenticateToken = (req, res, next) => {
       return res.status(403).json({ error: "Token inválido." });
     }
     req.user = user;
+    console.log("🚀 ~ jwt.verify ~ user:", user);
     next();
   });
 };

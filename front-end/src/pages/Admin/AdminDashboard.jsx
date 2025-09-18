@@ -1,22 +1,19 @@
 // src/pages/AdminDashboard.jsx
-import React, { useEffect, useState } from "react";
+// import React, { useEffect, useState } from "react";
+import React from "react";
+import { useAuth } from "../../hooks/useAuth";
 
 const AdminDashboard = () => {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    // Recupera os dados do usuário do localStorage
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
+  const { user } = useAuth();
 
   return (
     <div>
       <h1>Painel do Usuário</h1>
       {user ? (
-        <p>Usuário Logado: {user.name}</p>
+        <p>
+          Usuário Logado:{" "}
+          <strong>{user?.username || "Não identificado"}</strong>
+        </p>
       ) : (
         <p>Usuário Logado: Não identificado</p>
       )}

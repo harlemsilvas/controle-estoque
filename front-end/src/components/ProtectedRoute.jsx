@@ -5,9 +5,14 @@ const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
 
   if (!token) {
-    // Redirecionar para a página de login se o token não existir
+    // Se o token não existir, redireciona para a página de login
     return <Navigate to="/login" />;
   }
+
+  // if (!token) {
+  //   // Redirecionar para a página de login se o token não existir
+  //   return <Navigate to="/login" />;
+  // }
 
   return children;
 };

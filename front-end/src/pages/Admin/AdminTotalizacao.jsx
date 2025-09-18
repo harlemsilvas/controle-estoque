@@ -17,7 +17,7 @@ const AdminTotalizacao = () => {
         return response.json();
       })
       .then((data) => {
-        setTotalGeral(data.valorTotal || 0);
+        setTotalGeral(data.valor_total || 0);
       })
       .catch((error) => {
         console.error("Erro ao buscar total geral:", error);
@@ -34,7 +34,12 @@ const AdminTotalizacao = () => {
         return response.json();
       })
       .then((dataf) => {
-        setTotalPorFamilia(dataf || []);
+        setTotalPorFamilia(
+          (dataf || []).map((item) => ({
+            Familia: item.familia,
+            ValorTotal: item.valor_total,
+          }))
+        );
       })
       .catch((error) => {
         console.error("Erro ao buscar total por família:", error);
@@ -51,7 +56,12 @@ const AdminTotalizacao = () => {
         return response.json();
       })
       .then((datam) => {
-        setTotalPorMarca(datam || []);
+        setTotalPorMarca(
+          (datam || []).map((item) => ({
+            Marca: item.marca,
+            ValorTotal: item.valor_total,
+          }))
+        );
       })
       .catch((error) => {
         console.error("Erro ao buscar total por marca:", error);
@@ -68,7 +78,12 @@ const AdminTotalizacao = () => {
         return response.json();
       })
       .then((datafo) => {
-        setTotalPorFornecedor(datafo || []);
+        setTotalPorFornecedor(
+          (datafo || []).map((item) => ({
+            Fornecedor: item.fornecedor,
+            ValorTotal: item.valor_total,
+          }))
+        );
       })
       .catch((error) => {
         console.error("Erro ao buscar total por fornecedor:", error);

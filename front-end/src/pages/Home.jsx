@@ -106,7 +106,7 @@ const Home = () => {
   const icons = {
     produto: (
       <svg
-        className="w-6 h-6 text-blue-600"
+        className="w-6 h-6 max-w-none text-blue-600"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -121,7 +121,7 @@ const Home = () => {
     ),
     movimentacao: (
       <svg
-        className="w-6 h-6 text-orange-600"
+        className="w-6 h-6 max-w-none text-orange-600"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -136,7 +136,7 @@ const Home = () => {
     ),
     marca: (
       <svg
-        className="w-6 h-6 text-green-600"
+        className="w-6 h-6 max-w-none text-green-600"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -151,7 +151,7 @@ const Home = () => {
     ),
     familia: (
       <svg
-        className="w-6 h-6 text-purple-600"
+        className="w-6 h-6 max-w-none text-purple-600"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -166,7 +166,7 @@ const Home = () => {
     ),
     fornecedores: (
       <svg
-        className="w-6 h-6 text-purple-600"
+        className="w-6 h-6 max-w-none text-purple-600"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"

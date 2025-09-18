@@ -33,13 +33,20 @@ const RegisterPage = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/register", {
+      const response = await fetch("http://localhost:3000/usuarios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
-      const result = await response.json();
+      let result = {};
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        result = await response.json();
+      } else {
+        result = { message: await response.text() };
+      }
+
       if (response.ok) {
         toast.success("Conta criada com sucesso!");
         navigate("/login");
@@ -47,6 +54,7 @@ const RegisterPage = () => {
         toast.error(result.error || "Erro ao criar conta");
       }
     } catch (error) {
+      console.error(error);
       toast.error("Erro na conexão com o servidor");
     } finally {
       setIsSubmitting(false);

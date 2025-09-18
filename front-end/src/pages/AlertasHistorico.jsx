@@ -1,4 +1,4 @@
-// src/pages/admin/AlertasHistorico.jsx
+// src/pages/dmin/AlertasHistorico.jsx
 import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import { getAlertasHistorico } from "../services/api";

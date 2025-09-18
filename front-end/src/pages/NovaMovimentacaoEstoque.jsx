@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, setLoading } from "react";
 import { toastSuccess, toastError } from "../services/toast";
 import Header from "../components/Header";
 import { buscarProdutos, registrarMovimentacao } from "../services/api";
+import { useAuth } from "../hooks/useAuth";
 
 const NovaMovimentacaoEstoque = () => {
   const [termoBusca, setTermoBusca] = useState("");
@@ -9,10 +10,12 @@ const NovaMovimentacaoEstoque = () => {
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [buscarNovamente, setBuscarNovamente] = useState(false); // <-- Novo estado
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+  const logado = "ADMIN"; //user?.username; // Substituir por usuário logado
   const [form, setForm] = useState({
     tipo: "E",
     quantidade: "",
-    usuario: "ADMIN", // Substituir por usuário logado
+    usuario: logado, //"ADMIN", // Substituir por usuário logado
   });
 
   const buscarProdutosAtualizados = useCallback(async () => {
@@ -194,7 +197,7 @@ const NovaMovimentacaoEstoque = () => {
       // Força atualização imediata
       setBuscarNovamente(true);
       // Reset form
-      setForm({ tipo: "E", quantidade: "", usuario: "ADMIN" });
+      setForm({ tipo: "E", quantidade: "", usuario: logado });
       setProdutoSelecionado(null);
       //setTermoBusca("");
     } catch (error) {

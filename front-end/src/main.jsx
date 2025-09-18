@@ -10,7 +10,7 @@ import "./index.css";
 import Produtos from "./pages/Produtos";
 import ProdutoDetalhes from "./pages/ProdutoDetalhes";
 import ProdutoForm from "./pages/ProdutoForm";
-import { AuthProvider } from "./context/AuthProvider";
+import { AuthProvider } from "./context/AuthContext.jsx"; // Importe o AuthProvider
 import Dashboard from "./pages/Dashboard";
 import FamiliaProdutoPage from "./pages/FamiliaProdutoPage";
 import MarcaProdutoPage from "./pages/MarcaProdutoPage";
@@ -24,21 +24,23 @@ import RegisterPage from "./pages/RegisterPage";
 import RecoverPage from "./pages/RecoverPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import FornecedorProdutoPage from "./pages/FornecedorProdutoPage";
-import AdminMenu from "./pages/admin/AdminMenu";
-import AdminTotalizacao from "./pages/admin/AdminTotalizacao"; // Importe a página de totalização
-import AdminTotalizacaoFamilia from "./pages/admin/AdminTotalizacaoFamilia";
-import AdminTotalizacaoMarca from "./pages/admin/AdminTotalizacaoMarca";
-import AdminTotalizacaoFornecedor from "./pages/admin/AdminTotalizacaoFornecedor";
+import AdminMenu from "./pages/Admin/AdminMenu";
+import AdminTotalizacao from "./pages/Admin/AdminTotalizacao"; // Importe a página de totalização
+import AdminTotalizacaoFamilia from "./pages/Admin/AdminTotalizacaoFamilia";
+import AdminTotalizacaoMarca from "./pages/Admin/AdminTotalizacaoMarca";
+import AdminTotalizacaoFornecedor from "./pages/Admin/AdminTotalizacaoFornecedor";
 import AdminLayout from "./components/Admin/AdminLayout"; // Importe o layout administrativo
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminRelatorios from "./pages/admin/AdminRelatorios";
-import AdminUsuarios from "./pages/admin/AdminUsuarios";
-import AdminEtiquetas from "./pages/admin/AdminEtiquetas";
-import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
-import AdminRelatorioMarcas from "./pages/admin/AdminRelatorioMarcas";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+import AdminRelatorios from "./pages/Admin/AdminRelatorios";
+import AdminUsuarios from "./pages/Admin/AdminUsuarios";
+import AdminEtiquetas from "./pages/Admin/AdminEtiquetas";
+import AdminConfiguracoes from "./pages/Admin/AdminConfiguracoes";
+import AdminRelatorioMarcas from "./pages/Admin/AdminRelatorioMarcas";
 import AdminRelatorioFamilias from "./pages/Admin/AdminRelatorioFamilias";
-import AdminRelatorioFornecedores from "./pages/admin/AdminRelatorioFornecedores";
-// const user = { username: "admin" }; // Simulação de usuário logado
+import AdminRelatorioFornecedores from "./pages/Admin/AdminRelatorioFornecedores";
+import PrivateRoute from "./components/PrivateRoute";
+import ApiRoutesCheck from "./pages/ApiRoutesCheck";
+//const user = { username: "admin" }; // Simulação de usuário logado
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -140,12 +142,13 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<RecoverPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/api-check" element={<ApiRoutesCheck />} />
 
           {/* Rotas administrativas */}
           {/* <Route path="/admin" element={<AdminLayout user={user} />}> */}
           {/* Rotas protegidas */}
           <Route
-            path="/admin"
+            path="/Admin"
             element={
               <ProtectedRoute>
                 <AdminLayout />

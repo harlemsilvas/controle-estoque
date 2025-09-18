@@ -9,25 +9,30 @@ import { useNavigate } from "react-router-dom";
 
 const RecoverPage = () => {
   const [email, setEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toast.error("As senhas não coincidem!");
+      return;
+    }
     setIsSubmitting(true);
-
     try {
-      const response = await fetch("http://localhost:3000/recover", {
+      const response = await fetch("http://localhost:3000/recuperar-senha", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, newPassword }),
       });
-
       const result = await response.json();
       if (response.ok) {
-        toast.success("Email de recuperação enviado com sucesso!");
+        toast.success("Senha redefinida com sucesso!");
+        navigate("/login");
       } else {
-        toast.error(result.error || "Erro ao solicitar redefinição");
+        toast.error(result.error || "Erro ao redefinir senha");
       }
     } catch (error) {
       toast.error("Erro na conexão com o servidor");
@@ -79,6 +84,50 @@ const RecoverPage = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10 appearance-none relative block w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500 transition-all"
                   placeholder="seu@email.com"
+                />
+              </div>
+            </div>
+            <div>
+              <label
+                htmlFor="newPassword"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Nova Senha
+              </label>
+              <div className="mt-1 relative">
+                <LockClosedIcon className="h-5 w-5 absolute left-3 top-3.5 text-gray-400" />
+                <input
+                  id="newPassword"
+                  name="newPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="pl-10 appearance-none relative block w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500 transition-all"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Confirme a Nova Senha
+              </label>
+              <div className="mt-1 relative">
+                <LockClosedIcon className="h-5 w-5 absolute left-3 top-3.5 text-gray-400" />
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pl-10 appearance-none relative block w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500 transition-all"
+                  placeholder="••••••••"
                 />
               </div>
             </div>

@@ -51,19 +51,22 @@ export const getProdutos = async ({
   limit = 20,
   fornecedor,
   marca,
+  familia,
+  search,
   orderBy = "CODIGO",
   orderDir = "asc",
 } = {}) => {
-  const response = await api.get("/produto", {
-    params: {
-      page,
-      limit,
-      fornecedor,
-      marca,
-      orderBy,
-      orderDir,
-    },
-  });
+  const params = {
+    page,
+    limit,
+    fornecedor,
+    marca,
+    familia,
+    orderBy,
+    orderDir,
+  };
+  if (search !== undefined) params.search = search;
+  const response = await api.get("/produto", { params });
   return response.data;
 };
 

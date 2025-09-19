@@ -80,11 +80,13 @@ const produtoController = {
         ((req.query.orderDir as string) || 'asc').toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
       // Buscar produtos paginados, filtrando e ordenando
+      const search = req.query.search as string | undefined;
       const { produtos, total } = await produtoService.listarTodos({
         offset,
         limit,
         fornecedor,
         marca,
+        search,
         orderBy,
         orderDir,
       });

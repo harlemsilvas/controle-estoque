@@ -9,9 +9,11 @@ const produtoService = {
   },
   async listarTodos({
     offset = 0,
-    limit = 20,
+    limit = 500,
     fornecedor,
     marca,
+    familia,
+    search,
     orderBy = 'CODIGO',
     orderDir = 'ASC',
   }: {
@@ -19,10 +21,12 @@ const produtoService = {
     limit?: number;
     fornecedor?: string;
     marca?: string;
+    familia?: string;
+    search?: string;
     orderBy?: string;
     orderDir?: string;
   } = {}) {
-    // Filtro dinâmico por fornecedor e marca
+    // Filtro dinâmico por fornecedor, marca, família e busca
     let where = '(DELETADO = 0 OR DELETADO IS NULL)';
     if (fornecedor) {
       where += ' AND COD_FORNECEDOR = @fornecedor';
@@ -30,6 +34,25 @@ const produtoService = {
     if (marca) {
       where += ' AND CODIGO_MARCA = @marca';
     }
+    if (familia) {
+      where += ' AND CODIGO_FAMILIA = @familia';
+    }
+    if (search) {
+      where +=
+        ' AND (CAST(CODIGO AS VARCHAR) LIKE @search OR DESCRICAO LIKE @search OR CODIGO_BARRAS LIKE @search)';
+    }
+    // LOG de debug
+    console.log('[listarTodos] Parâmetros:', {
+      offset,
+      limit,
+      fornecedor,
+      marca,
+      familia,
+      search,
+      orderBy,
+      orderDir,
+    });
+    console.log('[listarTodos] Valor de familia:', familia);
     // Sanitização de campos de ordenação
     const allowedOrderBy = ['CODIGO', 'DESCRICAO'];
     const allowedOrderDir = ['ASC', 'DESC'];
@@ -42,17 +65,23 @@ const produtoService = {
     // Consulta paginada
     const query = `SELECT * FROM PRODUTO WHERE ${where} ORDER BY ${orderField} ${orderDirection} OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`;
     const totalQuery = `SELECT COUNT(*) as total FROM PRODUTO WHERE ${where}`;
+    console.log('[listarTodos] Query:', query);
     const request = new sql.Request()
       .input('offset', sql.Int, offset)
       .input('limit', sql.Int, limit);
     if (fornecedor) request.input('fornecedor', sql.VarChar, fornecedor);
     if (marca) request.input('marca', sql.VarChar, marca);
+    if (familia) request.input('familia', sql.VarChar, familia);
+    if (search) request.input('search', sql.VarChar, `%${search}%`);
     const produtosResult = await request.query(query);
     const totalRequest = new sql.Request();
     if (fornecedor) totalRequest.input('fornecedor', sql.VarChar, fornecedor);
     if (marca) totalRequest.input('marca', sql.VarChar, marca);
+    if (familia) totalRequest.input('familia', sql.VarChar, familia);
+    if (search) totalRequest.input('search', sql.VarChar, `%${search}%`);
     const totalResult = await totalRequest.query(totalQuery);
     const total = totalResult.recordset[0]?.total || 0;
+    console.log('[listarTodos] Total:', total);
     return {
       produtos: produtosResult.recordset,
       total,
@@ -104,7 +133,7 @@ const produtoService = {
   },
   async getEstoque() {
     const result = await sql.query`
-      SELECT TOP (10)
+      SELECT
         CODIGO,
         DESCRICAO,
         ESTOQUE_ATUAL,

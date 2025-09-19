@@ -29,29 +29,65 @@ const Produtos = () => {
   const [marcas, setMarcas] = useState([]);
   const [marcasLoading, setMarcasLoading] = useState(false);
   const [fornecedores, setFornecedores] = useState([]);
+  const [fornecedoresLoading, setFornecedoresLoading] = useState(false);
+  const [fornecedorInput, setFornecedorInput] = useState("");
   const [familia, setFamilia] = useState("");
   const [familias, setFamilias] = useState([]);
-  const [familiasLoading] = useState(false);
+  const [familiasLoading, setFamiliasLoading] = useState(false);
+  const [familiaInput, setFamiliaInput] = useState("");
   const [orderBy, setOrderBy] = useState("CODIGO");
   const [orderDir, setOrderDir] = useState("asc");
 
-  // Carregar fornecedores e famílias ao montar
+  // Buscar famílias dinamicamente conforme digita
   useEffect(() => {
-    const fetchFornecedoresEFamilias = async () => {
+    let ignore = false;
+    const fetchFamilias = async () => {
+      setFamiliasLoading(true);
       try {
-        const [forn, fam] = await Promise.all([
-          getFornecedor(),
-          getFamilias ? getFamilias() : Promise.resolve([]),
-        ]);
-        setFornecedores(Array.isArray(forn) ? forn : []);
-        setFamilias(Array.isArray(fam) ? fam : []);
+        const fam = await (getFamilias
+          ? getFamilias({
+              search: familiaInput,
+              limit: 50,
+              orderBy: "DESCRICAO",
+              orderDir: "asc",
+            })
+          : Promise.resolve([]));
+        if (!ignore) setFamilias(Array.isArray(fam?.data) ? fam.data : []);
       } catch {
-        setFornecedores([]);
-        setFamilias([]);
+        if (!ignore) setFamilias([]);
       }
+      setFamiliasLoading(false);
     };
-    fetchFornecedoresEFamilias();
-  }, []);
+    fetchFamilias();
+    return () => {
+      ignore = true;
+    };
+  }, [familiaInput]);
+
+  // Buscar fornecedores dinamicamente conforme digita
+  useEffect(() => {
+    let ignore = false;
+    const fetchFornecedores = async () => {
+      setFornecedoresLoading(true);
+      try {
+        const forn = await getFornecedor({
+          search: fornecedorInput,
+          limit: 500,
+          orderBy: "NOME",
+          orderDir: "asc",
+        });
+        if (!ignore)
+          setFornecedores(Array.isArray(forn?.data) ? forn.data : []);
+      } catch {
+        if (!ignore) setFornecedores([]);
+      }
+      setFornecedoresLoading(false);
+    };
+    fetchFornecedores();
+    return () => {
+      ignore = true;
+    };
+  }, [fornecedorInput]);
 
   // Carregar todas as marcas ao montar
   useEffect(() => {
@@ -59,7 +95,7 @@ const Produtos = () => {
       setMarcasLoading(true);
       try {
         const marc = await getMarcas({
-          limit: 100,
+          limit: 150,
           search: "",
           orderBy: "DESCRICAO",
           orderDir: "asc",
@@ -153,7 +189,25 @@ const Produtos = () => {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="container mx-auto px-6 py-4">
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 mb-4 items-end">
+          <button
+            type="button"
+            onClick={() => {
+              setSearchTerm("");
+              setFornecedor("");
+              setFornecedorInput("");
+              setMarca("");
+              setFamilia("");
+              setFamiliaInput("");
+              setOrderBy("CODIGO");
+              setOrderDir("asc");
+              setPage(1);
+            }}
+            className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 border border-gray-300 text-gray-700"
+            style={{ height: 40 }}
+          >
+            Limpar
+          </button>
           <input
             type="text"
             placeholder="Buscar por nome, código ou barras..."
@@ -164,6 +218,7 @@ const Produtos = () => {
           <div style={{ minWidth: 220 }}>
             <Autocomplete
               options={fornecedores}
+              loading={fornecedoresLoading}
               getOptionLabel={(option) => option.NOME || option.nome || ""}
               isOptionEqualToValue={(option, value) =>
                 (option.CODIGO || option.id || option.codigo) ===
@@ -181,6 +236,10 @@ const Produtos = () => {
                     : ""
                 );
               }}
+              inputValue={fornecedorInput}
+              onInputChange={(_, newInputValue) =>
+                setFornecedorInput(newInputValue)
+              }
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -228,6 +287,7 @@ const Produtos = () => {
           <div style={{ minWidth: 220 }}>
             <Autocomplete
               options={familias}
+              loading={familiasLoading}
               getOptionLabel={(option) => option.DESCRICAO || option.nome || ""}
               isOptionEqualToValue={(option, value) =>
                 (option.CODIGO || option.id || option.codigo) ===
@@ -240,11 +300,16 @@ const Produtos = () => {
               }
               onChange={(_, newValue) => {
                 setFamilia(
-                  newValue
-                    ? newValue.CODIGO || newValue.id || newValue.codigo
+                  newValue &&
+                    (newValue.CODIGO || newValue.id || newValue.codigo)
+                    ? String(newValue.CODIGO || newValue.id || newValue.codigo)
                     : ""
                 );
               }}
+              inputValue={familiaInput}
+              onInputChange={(_, newInputValue) =>
+                setFamiliaInput(newInputValue)
+              }
               renderInput={(params) => (
                 <TextField
                   {...params}

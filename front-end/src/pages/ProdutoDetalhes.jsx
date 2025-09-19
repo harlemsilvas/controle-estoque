@@ -153,12 +153,6 @@ const ProdutoDetalhes = () => {
             {/* Botões de Ação */}
             <div className="mt-8 flex space-x-4">
               <Link
-                to="/produtos"
-                className="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500"
-              >
-                Voltar
-              </Link>
-              <Link
                 to={`/produto/editar/${produto.CODIGO}`}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
@@ -170,6 +164,12 @@ const ProdutoDetalhes = () => {
               >
                 Excluir
               </button>
+              <Link
+                to="/produtos"
+                className="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500"
+              >
+                Voltar
+              </Link>
             </div>
             {/* Modal de confirmação simples para qualquer exclusão */}
             {showSimpleDeleteModal && (

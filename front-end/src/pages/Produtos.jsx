@@ -7,62 +7,43 @@ import {
   getProdutos,
   getFornecedor,
   getMarcas,
-  getFamilias,
 } from "../services/api";
 import { toastSuccess, toastError } from "../services/toast";
-import ProdutosGrid from "../components/ProdutosGrid";
+import ProdutosTable from "../components/ProdutosTable";
+
+const FILTERS_KEY = "produtos_filtros";
 
 const Produtos = () => {
+  // Carregar filtros do localStorage se existirem
+  const saved = (() => {
+    try {
+      return JSON.parse(localStorage.getItem(FILTERS_KEY)) || {};
+    } catch {
+      return {};
+    }
+  })();
   const [produtos, setProdutos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(saved.searchTerm || "");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
   const [showSimpleDeleteModal, setShowSimpleDeleteModal] = useState(false);
   const [relatedRecords, setRelatedRecords] = useState([]);
   // Novos estados para paginação/filtros/ordenação
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(saved.page || 1);
   const [limit] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
-  const [fornecedor, setFornecedor] = useState("");
-  const [marca, setMarca] = useState("");
+  const [fornecedor, setFornecedor] = useState(saved.fornecedor || "");
+  const [marca, setMarca] = useState(saved.marca || "");
   const [marcas, setMarcas] = useState([]);
   const [marcasLoading, setMarcasLoading] = useState(false);
   const [fornecedores, setFornecedores] = useState([]);
   const [fornecedoresLoading, setFornecedoresLoading] = useState(false);
-  const [fornecedorInput, setFornecedorInput] = useState("");
-  const [familia, setFamilia] = useState("");
-  const [familias, setFamilias] = useState([]);
-  const [familiasLoading, setFamiliasLoading] = useState(false);
-  const [familiaInput, setFamiliaInput] = useState("");
-  const [orderBy, setOrderBy] = useState("CODIGO");
-  const [orderDir, setOrderDir] = useState("asc");
-
-  // Buscar famílias dinamicamente conforme digita
-  useEffect(() => {
-    let ignore = false;
-    const fetchFamilias = async () => {
-      setFamiliasLoading(true);
-      try {
-        const fam = await (getFamilias
-          ? getFamilias({
-              search: familiaInput,
-              limit: 50,
-              orderBy: "DESCRICAO",
-              orderDir: "asc",
-            })
-          : Promise.resolve([]));
-        if (!ignore) setFamilias(Array.isArray(fam?.data) ? fam.data : []);
-      } catch {
-        if (!ignore) setFamilias([]);
-      }
-      setFamiliasLoading(false);
-    };
-    fetchFamilias();
-    return () => {
-      ignore = true;
-    };
-  }, [familiaInput]);
+  const [fornecedorInput, setFornecedorInput] = useState(
+    saved.fornecedorInput || ""
+  );
+  const [orderBy, setOrderBy] = useState(saved.orderBy || "CODIGO");
+  const [orderDir, setOrderDir] = useState(saved.orderDir || "asc");
 
   // Buscar fornecedores dinamicamente conforme digita
   useEffect(() => {
@@ -95,12 +76,15 @@ const Produtos = () => {
       setMarcasLoading(true);
       try {
         const marc = await getMarcas({
-          limit: 150,
+          page: 1,
+          limit: 1000, // busca "todas" as marcas, ajuste conforme necessário
           search: "",
           orderBy: "DESCRICAO",
           orderDir: "asc",
         });
-        setMarcas(Array.isArray(marc?.data) ? marc.data : []);
+        setMarcas(
+          Array.isArray(marc?.data) ? marc.data : marc?.data?.data || []
+        );
       } catch {
         setMarcas([]);
       }
@@ -108,6 +92,22 @@ const Produtos = () => {
     };
     fetchMarcas();
   }, []);
+
+  // Salvar filtros no localStorage sempre que mudarem
+  useEffect(() => {
+    localStorage.setItem(
+      FILTERS_KEY,
+      JSON.stringify({
+        searchTerm,
+        fornecedor,
+        fornecedorInput,
+        marca,
+        orderBy,
+        orderDir,
+        page,
+      })
+    );
+  }, [searchTerm, fornecedor, fornecedorInput, marca, orderBy, orderDir, page]);
 
   useEffect(() => {
     const fetchProdutos = async () => {
@@ -119,7 +119,6 @@ const Produtos = () => {
           search: searchTerm || undefined,
           fornecedor: fornecedor || undefined,
           marca: marca || undefined,
-          familia: familia || undefined,
           orderBy,
           orderDir,
         });
@@ -131,7 +130,7 @@ const Produtos = () => {
       setLoading(false);
     };
     fetchProdutos();
-  }, [page, limit, fornecedor, marca, familia, orderBy, orderDir, searchTerm]);
+  }, [page, limit, fornecedor, marca, orderBy, orderDir, searchTerm]);
 
   // Função para verificar registros relacionados
   const handleDelete = (productId) => {
@@ -189,33 +188,15 @@ const Produtos = () => {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="container mx-auto px-6 py-4">
-        <div className="flex flex-wrap gap-2 mb-4 items-end">
-          <button
-            type="button"
-            onClick={() => {
-              setSearchTerm("");
-              setFornecedor("");
-              setFornecedorInput("");
-              setMarca("");
-              setFamilia("");
-              setFamiliaInput("");
-              setOrderBy("CODIGO");
-              setOrderDir("asc");
-              setPage(1);
-            }}
-            className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 border border-gray-300 text-gray-700"
-            style={{ height: 40 }}
-          >
-            Limpar
-          </button>
+        <div className="flex flex-wrap gap-4 mb-4 items-end">
           <input
             type="text"
             placeholder="Buscar por nome, código ou barras..."
-            className="px-2 py-1 border rounded"
+            className="px-2 py-2 border rounded w-72 md:w-96 flex-1 min-w-[180px]"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <div style={{ minWidth: 220 }}>
+          <div className="min-w-[220px]">
             <Autocomplete
               options={fornecedores}
               loading={fornecedoresLoading}
@@ -252,7 +233,7 @@ const Produtos = () => {
               noOptionsText="Nenhum fornecedor encontrado"
             />
           </div>
-          <div style={{ minWidth: 220 }}>
+          <div className="min-w-[220px]">
             <Autocomplete
               options={marcas}
               loading={marcasLoading}
@@ -284,61 +265,41 @@ const Produtos = () => {
               noOptionsText="Nenhuma marca encontrada"
             />
           </div>
-          <div style={{ minWidth: 220 }}>
-            <Autocomplete
-              options={familias}
-              loading={familiasLoading}
-              getOptionLabel={(option) => option.DESCRICAO || option.nome || ""}
-              isOptionEqualToValue={(option, value) =>
-                (option.CODIGO || option.id || option.codigo) ===
-                (value.CODIGO || value.id || value.codigo)
-              }
-              value={
-                familias.find(
-                  (f) => (f.CODIGO || f.id || f.codigo) === familia
-                ) || null
-              }
-              onChange={(_, newValue) => {
-                setFamilia(
-                  newValue &&
-                    (newValue.CODIGO || newValue.id || newValue.codigo)
-                    ? String(newValue.CODIGO || newValue.id || newValue.codigo)
-                    : ""
-                );
+          {/* Ordenação agora apenas pelos ícones no cabeçalho da tabela */}
+          <div className="ml-auto flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm("");
+                setFornecedor("");
+                setFornecedorInput("");
+                setMarca("");
+                setOrderBy("CODIGO");
+                setOrderDir("asc");
+                setPage(1);
+                localStorage.removeItem(FILTERS_KEY);
               }}
-              inputValue={familiaInput}
-              onInputChange={(_, newInputValue) =>
-                setFamiliaInput(newInputValue)
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Família"
-                  placeholder="Buscar família..."
-                  size="small"
-                />
-              )}
-              clearOnEscape
-              noOptionsText="Nenhuma família encontrada"
-            />
+              className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 border border-gray-300 text-gray-700"
+              style={{ height: 40 }}
+            >
+              Limpar
+            </button>
           </div>
-          <select
-            value={orderBy}
-            onChange={(e) => setOrderBy(e.target.value)}
-            className="px-2 py-1 border rounded"
-          >
-            <option value="CODIGO">Código</option>
-            <option value="DESCRICAO">Nome</option>
-          </select>
-          <select
-            value={orderDir}
-            onChange={(e) => setOrderDir(e.target.value)}
-            className="px-2 py-1 border rounded"
-          >
-            <option value="asc">Asc</option>
-            <option value="desc">Desc</option>
-          </select>
         </div>
+        <ProdutosTable
+          produtos={Array.isArray(produtos) ? produtos : []}
+          onEdit={(codigo) =>
+            (window.location.href = `/produto/editar/${codigo}`)
+          }
+          onDelete={handleDelete}
+          onView={(codigo) => (window.location.href = `/produto/${codigo}`)}
+          loading={loading}
+          orderBy={orderBy}
+          orderDir={orderDir}
+          setOrderBy={setOrderBy}
+          setOrderDir={setOrderDir}
+        />
+        {/* ProdutosGrid mantido para backup:
         <ProdutosGrid
           produtos={Array.isArray(produtos) ? produtos : []}
           onEdit={(codigo) =>
@@ -349,6 +310,7 @@ const Produtos = () => {
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
         />
+        */}
         {/* Modal de confirmação simples para qualquer exclusão */}
         {showSimpleDeleteModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">

@@ -106,43 +106,52 @@ const ProdutoForm = ({
               </div>
               <div>
                 <label className="block text-gray-700 mb-2">Família</label>
-                <Autocomplete
-                  options={familias}
-                  getOptionLabel={(option) =>
-                    option.DESCRICAO || option.nome || ""
-                  }
-                  isOptionEqualToValue={(option, value) =>
-                    (option.CODIGO || option.id || option.codigo) ===
-                    (value.CODIGO || value.id || value.codigo)
-                  }
-                  value={
-                    familias.find(
-                      (f) =>
-                        (f.CODIGO || f.id || f.codigo) ===
-                        formData.CODIGO_FAMILIA
-                    ) || null
-                  }
-                  onChange={(_, newValue) => {
-                    onChange({
-                      target: {
-                        name: "CODIGO_FAMILIA",
-                        value: newValue
-                          ? newValue.CODIGO || newValue.id || newValue.codigo
-                          : "",
-                      },
-                    });
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Família"
-                      placeholder="Buscar família..."
-                      size="small"
-                    />
-                  )}
-                  clearOnEscape
-                  noOptionsText="Nenhuma família encontrada"
-                />
+
+                <div>
+                  <label className="block text-gray-700 mb-2">Família</label>
+                  <Autocomplete
+                    options={familias}
+                    getOptionLabel={(option) =>
+                      option.DESCRICAO || option.nome || ""
+                    }
+                    isOptionEqualToValue={(option, value) =>
+                      (option.CODIGO || option.id || option.codigo) ===
+                      (value?.CODIGO || value?.id || value?.codigo)
+                    }
+                    value={
+                      familias.find(
+                        (f) =>
+                          (f.CODIGO || f.id || f.codigo) ===
+                          formData.CODIGO_FAMILIA
+                      ) || null
+                    }
+                    onChange={(_, newValue) => {
+                      onChange({
+                        target: {
+                          name: "CODIGO_FAMILIA",
+                          value: newValue
+                            ? newValue.CODIGO || newValue.id || newValue.codigo
+                            : "",
+                        },
+                      });
+                      if (newValue) {
+                        console.log("Família selecionada:", newValue.CODIGO);
+                      } else {
+                        console.log("Família limpa");
+                      }
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Família"
+                        placeholder="Buscar família..."
+                        size="small"
+                      />
+                    )}
+                    clearOnEscape
+                    noOptionsText="Nenhuma família encontrada"
+                  />
+                </div>
               </div>
             </div>
 

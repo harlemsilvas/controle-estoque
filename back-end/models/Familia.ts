@@ -13,23 +13,27 @@ const familiaModel = {
     return result.recordset;
   },
 
-  async getAllPaged({
+  /**
+   * Retorna famílias paginadas
+   * @param {number} page Página atual (1-based)
+   * @param {number} limit Quantidade por página
+   * @returns {Promise<{ data: Familia[], total: number, totalPages: number }>}
+   */
+  async getPaginated(
     page = 1,
     limit = 20,
     search = '',
     orderBy = 'DESCRICAO',
-    orderDir = 'asc',
-  }: {
-    page?: number;
-    limit?: number;
-    search?: string;
-    orderBy?: string;
-    orderDir?: 'asc' | 'desc';
-  }): Promise<{ data: Familia[]; total: number }> {
+    orderDir: 'asc' | 'desc' = 'asc'
+  ): Promise<{ data: Familia[]; total: number; totalPages: number }> {
     await connectToDatabase();
     const offset = (page - 1) * limit;
     let where = '';
-    let params: any[] = [];
+    const params: {
+      name: string;
+      type: typeof sql.VarChar | typeof sql.Int;
+      value: string | number;
+    }[] = [];
     if (search) {
       where = 'WHERE DESCRICAO LIKE @search';
       params.push({ name: 'search', type: sql.VarChar, value: `%${search}%` });
@@ -42,12 +46,19 @@ const familiaModel = {
     params.forEach((p) => request.input(p.name, p.type, p.value));
     request.input('offset', sql.Int, offset);
     request.input('limit', sql.Int, limit);
-    const result = await request.query(query);
+    const dataResult = await request.query(query);
     const countRequest = new sql.Request();
     params.forEach((p) => countRequest.input(p.name, p.type, p.value));
     const countResult = await countRequest.query(countQuery);
-    return { data: result.recordset, total: countResult.recordset[0].total };
+    const total = countResult.recordset[0].total;
+    const totalPages = Math.ceil(total / limit);
+    return {
+      data: dataResult.recordset,
+      total,
+      totalPages,
+    };
   },
+
   async getById(codigo: number): Promise<Familia | undefined> {
     await connectToDatabase();
     const result = await sql.query`SELECT * FROM FAMILIA_PRODUTO WHERE CODIGO = ${codigo}`;

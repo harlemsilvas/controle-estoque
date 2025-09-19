@@ -51,13 +51,13 @@ const familiaController = {
       const search = (req.query.search as string) || '';
       const orderBy = (req.query.orderBy as string) || 'DESCRICAO';
       const orderDir = (req.query.orderDir as string) === 'desc' ? 'desc' : 'asc';
-      const { data, total } = await familiaService.listarPaginado({
+      const { data, total } = await familiaService.listarPaginado(
         page,
         limit,
         search,
         orderBy,
-        orderDir,
-      });
+        orderDir
+      );
       const totalPages = Math.ceil(total / limit) || 1;
       res.json({ data, totalPages });
     } catch (err) {

@@ -5,20 +5,19 @@ const familiaService = {
     return await familiaModel.getAll();
   },
 
-  async listarPaginado({
+  /**
+   * Lista famílias paginadas
+   * @param {number} page
+   * @param {number} limit
+   */
+  async listarPaginado(
     page = 1,
     limit = 20,
     search = '',
     orderBy = 'DESCRICAO',
-    orderDir = 'asc',
-  }: {
-    page?: number;
-    limit?: number;
-    search?: string;
-    orderBy?: string;
-    orderDir?: 'asc' | 'desc';
-  }) {
-    return await familiaModel.getAllPaged({ page, limit, search, orderBy, orderDir });
+    orderDir: 'asc' | 'desc' = 'asc'
+  ) {
+    return await familiaModel.getPaginated(page, limit, search, orderBy, orderDir);
   },
   async buscarPorCodigo(codigo: number) {
     const familia = await familiaModel.getById(codigo);

@@ -7,7 +7,7 @@ import {
   getFamilias,
   getFornecedor,
   createProduto,
-  updateProduto
+  updateProduto,
 } from "../services/api";
 import { toastSuccess, toastError } from "../services/toast";
 import ProdutoFormComponent from "../components/ProdutoForm";
@@ -33,10 +33,21 @@ const ProdutoForm = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const marcasData = await getMarcas({ limit: 100, orderBy: 'DESCRICAO', orderDir: 'asc' });
-  const familiasData = await getFamilias();
-  setMarcas(Array.isArray(marcasData) ? marcasData : marcasData.data || []);
-  setFamilias(Array.isArray(familiasData) ? familiasData : familiasData.data || []);
+      const marcasData = await getMarcas({
+        limit: 100,
+        orderBy: "DESCRICAO",
+        orderDir: "asc",
+      });
+      // Buscar todas as famílias, sem limite
+      const familiasData = await getFamilias({
+        limit: 10000,
+        orderBy: "DESCRICAO",
+        orderDir: "asc",
+      });
+      setMarcas(Array.isArray(marcasData) ? marcasData : marcasData.data || []);
+      setFamilias(
+        Array.isArray(familiasData) ? familiasData : familiasData.data || []
+      );
       if (id) {
         try {
           const produtoData = await getProdutoById(id);
@@ -74,8 +85,16 @@ const ProdutoForm = () => {
 
   useEffect(() => {
     const buscarFornecedores = async () => {
-      const fornecedoresData = await getFornecedor({ limit: 100, orderBy: 'NOME', orderDir: 'asc' });
-      setFornecedores(Array.isArray(fornecedoresData) ? fornecedoresData : fornecedoresData.data || []);
+      const fornecedoresData = await getFornecedor({
+        limit: 100,
+        orderBy: "NOME",
+        orderDir: "asc",
+      });
+      setFornecedores(
+        Array.isArray(fornecedoresData)
+          ? fornecedoresData
+          : fornecedoresData.data || []
+      );
     };
     buscarFornecedores();
   }, []);

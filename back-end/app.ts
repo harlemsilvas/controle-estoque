@@ -131,7 +131,8 @@ app.use('/usuarios', usuarioRouter);
 
 // Alertas
 app.get('/alertas/historico', alertaController.historico);
-app.get('/alertas', alertaController.historico);
+app.get('/alertas', alertaController.ativos);
+app.patch('/alertas/resolver/:id', alertaController.resolverAlerta);
 
 // Login
 app.post('/login', authController.login);

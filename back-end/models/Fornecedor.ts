@@ -102,14 +102,19 @@ const fornecedorModel = {
   async remove(codigo: number, force = false): Promise<{ codigo: number }> {
     await connectToDatabase();
     // Verifica se há produtos vinculados
-    const result =
-      await sql.query`SELECT COUNT(*) as total FROM PRODUTO WHERE COD_FORNECEDOR = ${codigo}`;
-    const total = result.recordset[0]?.total || 0;
+    const result = await sql.query`SELECT * FROM PRODUTO WHERE COD_FORNECEDOR = ${codigo}`;
+    const produtosVinculados = result.recordset;
+    const total = produtosVinculados.length;
     if (total > 0 && !force) {
-      const error: any = new Error(
+      interface FornecedorError extends Error {
+        code?: string;
+        vinculos?: unknown;
+      }
+      const error: FornecedorError = new Error(
         'Não é possível remover: existem produtos vinculados a este fornecedor.'
       );
       error.code = 'FK_PRODUTO_FORNECEDOR';
+      error.vinculos = produtosVinculados;
       throw error;
     }
     if (total > 0 && force) {

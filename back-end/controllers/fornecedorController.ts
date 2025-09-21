@@ -151,12 +151,20 @@ const fornecedorController = {
       const force = req.query.force === 'true';
       await fornecedorService.remover(codigo, force);
       res.status(204).send();
-    } catch (err: any) {
-      if (err.code === 'FK_PRODUTO_FORNECEDOR') {
-        return res.status(400).json({
+    } catch (err) {
+      console.error('Erro ao remover fornecedor:', err);
+      interface FornecedorError extends Error {
+        code?: string;
+        vinculos?: unknown[];
+      }
+      const fornecedorErr = err as FornecedorError;
+      if (fornecedorErr.code === 'FK_PRODUTO_FORNECEDOR') {
+        return res.status(409).json({
           message:
+            fornecedorErr.message ||
             'Não é possível remover: existem produtos vinculados a este fornecedor. Para forçar a remoção, utilize a opção de exclusão forçada.',
-          code: err.code,
+          code: fornecedorErr.code,
+          vinculos: fornecedorErr.vinculos || [],
         });
       }
       next(err);

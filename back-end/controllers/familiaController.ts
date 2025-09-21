@@ -51,15 +51,14 @@ const familiaController = {
       const search = (req.query.search as string) || '';
       const orderBy = (req.query.orderBy as string) || 'DESCRICAO';
       const orderDir = (req.query.orderDir as string) === 'desc' ? 'desc' : 'asc';
-      const { data, total } = await familiaService.listarPaginado(
+      const { data, total, totalPages } = await familiaService.listarPaginado(
         page,
         limit,
         search,
         orderBy,
         orderDir
       );
-      const totalPages = Math.ceil(total / limit) || 1;
-      res.json({ data, totalPages });
+      res.json({ data, total, totalPages });
     } catch (err) {
       next(err);
     }
@@ -196,12 +195,20 @@ const familiaController = {
       const force = req.query.force === 'true';
       await familiaService.remover(codigo, force);
       res.status(204).send();
-    } catch (err: any) {
-      if (err.code === 'FK_PRODUTO_FAMILIA') {
-        return res.status(400).json({
+    } catch (err: unknown) {
+      if (
+        err &&
+        typeof err === 'object' &&
+        'code' in err &&
+        (err as { code?: unknown }).code === 'FK_PRODUTO_FAMILIA'
+      ) {
+        const e = err as { message?: string; code?: string; vinculos?: unknown[] };
+        return res.status(409).json({
           message:
+            e.message ||
             'Não é possível remover: existem produtos vinculados a esta família. Para forçar a remoção, utilize a opção de exclusão forçada.',
-          code: err.code,
+          code: e.code,
+          vinculos: e.vinculos || [],
         });
       }
       next(err);

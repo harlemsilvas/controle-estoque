@@ -1,18 +1,29 @@
 // src/pages/dmin/AlertasHistorico.jsx
 import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
-import { getAlertasHistorico } from "../services/api";
+import { getAlertasHistorico, resolveAlerta } from "../services/api";
+import AdminUsuarios from "./Admin/AdminUsuarios";
 
 const AlertasHistorico = () => {
   const [alertas, setAlertas] = useState([]);
 
+  const fetchAlertas = async () => {
+    const data = await getAlertasHistorico();
+    setAlertas(data);
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      const data = await getAlertasHistorico();
-      setAlertas(data);
-    };
-    fetchData();
+    fetchAlertas();
   }, []);
+
+  const handleResolver = async (id) => {
+    try {
+      await resolveAlerta(id, "admin");
+      await fetchAlertas();
+    } catch (err) {
+      alert("Erro ao resolver alerta: " + (err.message || err));
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -38,6 +49,9 @@ const AlertasHistorico = () => {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Status
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                  Ação
                 </th>
               </tr>
             </thead>
@@ -69,6 +83,19 @@ const AlertasHistorico = () => {
                     >
                       {alerta.STATUS}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    {alerta.STATUS === "ativo" ? (
+                      <button
+                        className="px-3 py-1 rounded bg-green-500 text-white hover:bg-green-600 transition-colors"
+                        onClick={() => handleResolver(alerta.ID)}
+                        title="Marcar como resolvido"
+                      >
+                        Resolver
+                      </button>
+                    ) : (
+                      <span className="text-gray-400">Resolvido</span>
+                    )}
                   </td>
                 </tr>
               ))}

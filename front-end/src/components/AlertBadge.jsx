@@ -3,6 +3,7 @@ import { BellIcon } from "@heroicons/react/24/outline";
 import ConfirmationModal from "./ConfirmationModal";
 import { getAlertas, resolveAlerta } from "../services/api";
 import { toastSuccess, toastError } from "../services/toast";
+import { useAuth } from "../hooks/useAuth";
 
 const AlertBadge = () => {
   const [alertCount, setAlertCount] = useState(0);
@@ -10,6 +11,7 @@ const AlertBadge = () => {
   const [alerts, setAlerts] = useState([]);
   const [showResolveModal, setShowResolveModal] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState(null);
+  const { user } = useAuth();
 
   const loadAlerts = async () => {
     try {
@@ -23,7 +25,8 @@ const AlertBadge = () => {
 
   const handleResolveConfirm = async () => {
     try {
-      await resolveAlerta(selectedAlert.ID);
+      await resolveAlerta(selectedAlert.ID, user?.nome || "admin"); // Usuário fixo "admin" por enquanto
+      // Remover o alerta resolvido da lista localmente
       setAlerts(alerts.filter((a) => a.ID !== selectedAlert.ID));
       setAlertCount((prev) => prev - 1);
       toastSuccess("Alerta resolvido com sucesso!");

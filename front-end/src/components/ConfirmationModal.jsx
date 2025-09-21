@@ -8,7 +8,11 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl p-6 max-w-md w-full">
         <h3 className="text-xl font-bold text-gray-800 mb-4">{title}</h3>
-        <p className="text-gray-600 mb-6">{message}</p>
+        {typeof message === "string" ? (
+          <p className="text-gray-600 mb-6">{message}</p>
+        ) : (
+          <div className="text-gray-600 mb-6">{message}</div>
+        )}
         <div className="flex justify-end space-x-4">
           <button
             onClick={onClose}

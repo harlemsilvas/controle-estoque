@@ -86,15 +86,20 @@ const familiaModel = {
    */
   async remove(codigo: number, force = false): Promise<{ codigo: number }> {
     await connectToDatabase();
-    // Verifica se há produtos vinculados
-    const result =
-      await sql.query`SELECT COUNT(*) as total FROM PRODUTO WHERE CODIGO_FAMILIA = ${codigo}`;
-    const total = result.recordset[0]?.total || 0;
+    // Busca produtos vinculados
+    const result = await sql.query`SELECT * FROM PRODUTO WHERE CODIGO_FAMILIA = ${codigo}`;
+    const produtosVinculados = result.recordset;
+    const total = produtosVinculados.length;
     if (total > 0 && !force) {
-      const error: any = new Error(
+      interface FamiliaError extends Error {
+        code?: string;
+        vinculos?: unknown;
+      }
+      const error: FamiliaError = new Error(
         'Não é possível remover: existem produtos vinculados a esta família.'
       );
       error.code = 'FK_PRODUTO_FAMILIA';
+      error.vinculos = produtosVinculados;
       throw error;
     }
     if (total > 0 && force) {

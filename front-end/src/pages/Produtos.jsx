@@ -31,7 +31,7 @@ const Produtos = () => {
   const [relatedRecords, setRelatedRecords] = useState([]);
   // Novos estados para paginação/filtros/ordenação
   const [page, setPage] = useState(saved.page || 1);
-  const [limit] = useState(20);
+  const [limit, setLimit] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [fornecedor, setFornecedor] = useState(saved.fornecedor || "");
   const [marca, setMarca] = useState(saved.marca || "");
@@ -124,6 +124,8 @@ const Produtos = () => {
         });
         setProdutos(data.data);
         setTotalPages(data.totalPages);
+        // Se a API retornar total, pode salvar para exibir
+        if (data.total) setTotal(data.total);
       } catch {
         toastError("Erro ao buscar produtos");
       }
@@ -131,6 +133,9 @@ const Produtos = () => {
     };
     fetchProdutos();
   }, [page, limit, fornecedor, marca, orderBy, orderDir, searchTerm]);
+
+  // Estado para total de registros (opcional, se a API retornar)
+  const [total, setTotal] = useState(0);
 
   // Função para verificar registros relacionados
   const handleDelete = (productId) => {
@@ -341,24 +346,44 @@ const Produtos = () => {
             </div>
           </div>
         )}
-        <div className="flex gap-2 justify-center mt-4">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="px-2 py-1 border rounded disabled:opacity-50"
-          >
-            Anterior
-          </button>
-          <span>
-            Página {page} de {totalPages}
+        {/* Controles de paginação no padrão da página de marcas */}
+        <div className="flex justify-between items-center mt-4">
+          <span className="text-gray-600">
+            Página {page} de {totalPages} {total ? `(${total} produtos)` : ""}
           </span>
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="px-2 py-1 border rounded disabled:opacity-50"
-          >
-            Próxima
-          </button>
+          <div className="space-x-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+            >
+              Anterior
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+            >
+              Próxima
+            </button>
+          </div>
+          <div>
+            <label className="mr-2">Itens por página:</label>
+            <select
+              value={limit}
+              onChange={(e) => {
+                setLimit(Number(e.target.value));
+                setPage(1);
+              }}
+              className="border rounded p-1"
+            >
+              {[5, 10, 20, 50, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
       {/* Modal de Confirmação */}
@@ -372,36 +397,42 @@ const Produtos = () => {
               Os seguintes registros relacionados serão excluídos:
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto">
-              {relatedRecords.map((record, index) => (
-                <div
-                  key={index}
-                  className="bg-gray-100 p-4 rounded-lg shadow-sm flex flex-col justify-between"
-                >
-                  <h3 className="text-sm font-semibold text-gray-800">
-                    Registro #{index + 1}
-                  </h3>
-                  <ul className="text-xs text-gray-600 mt-2">
-                    {Object.entries(record).map(([key, value]) => {
-                      const isDate =
-                        typeof value === "string" &&
-                        !isNaN(new Date(value).getTime()) &&
-                        value.trim() !== "";
-                      const formattedValue =
-                        value === null || value === ""
-                          ? "N/A"
-                          : isDate
-                          ? new Date(value).toLocaleDateString("pt-BR")
-                          : value;
-                      return (
-                        <li key={key}>
-                          <span className="font-medium">{key}:</span>{" "}
-                          {formattedValue}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
+              {relatedRecords.map((record, index) => {
+                // Tenta usar um campo único como key, senão usa index
+                const uniqueKey =
+                  record.CODIGO || record.id || record.codigo || index;
+                return (
+                  <div
+                    key={uniqueKey}
+                    className="bg-gray-100 p-4 rounded-lg shadow-sm flex flex-col justify-between"
+                  >
+                    <h3 className="text-sm font-semibold text-gray-800">
+                      Registro #{index + 1}
+                    </h3>
+                    <ul className="text-xs text-gray-600 mt-2">
+                      {Object.entries(record).map(([key, value]) => {
+                        const isDate =
+                          typeof value === "string" &&
+                          !isNaN(new Date(value).getTime()) &&
+                          value.trim() !== "";
+                        const formattedValue =
+                          value === null || value === ""
+                            ? "N/A"
+                            : isDate
+                            ? new Date(value).toLocaleDateString("pt-BR")
+                            : value;
+                        // Usa key composta para evitar duplicidade
+                        return (
+                          <li key={key + "-" + uniqueKey}>
+                            <span className="font-medium">{key}:</span>{" "}
+                            {formattedValue}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                );
+              })}
             </div>
             <div className="mt-6 flex justify-end space-x-4">
               <button

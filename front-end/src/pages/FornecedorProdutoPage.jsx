@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { toastSuccess, toastError } from "../services/toast";
 import FornecedorForm from "../components/FornecedorForm";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -24,8 +24,12 @@ const FornecedorProdutoPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [fornecedorToDelete, setFornecedorToDelete] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showForceDeleteModal, setShowForceDeleteModal] = useState(false);
-  const [fornecedorForceDelete, setFornecedorForceDelete] = useState(null);
+  const [cascadePrompt, setCascadePrompt] = useState({
+    open: false,
+    count: 0,
+    vinculos: [],
+    onConfirm: null,
+  });
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
@@ -80,44 +84,37 @@ const FornecedorProdutoPage = () => {
     }
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = async (force = false) => {
     try {
       if (!fornecedorToDelete) return;
-      await deleteFornecedor(fornecedorToDelete);
+      const result = await deleteFornecedor(fornecedorToDelete, force);
+      console.log("Resultado da exclusão de fornecedor:", result);
+      if (result && result.vinculos) {
+        console.log("Vínculos retornados:", result.vinculos);
+        setCascadePrompt({
+          open: true,
+          count: result.vinculos.length,
+          vinculos: result.vinculos,
+          onConfirm: async () => {
+            setCascadePrompt({
+              open: false,
+              count: 0,
+              vinculos: [],
+              onConfirm: null,
+            });
+            await handleDeleteConfirm(true);
+          },
+        });
+        return;
+      }
       toastSuccess("Fornecedor excluído com sucesso!");
       loadFornecedores();
     } catch (error) {
-      // Se erro 400 e código FK_PRODUTO_FORNECEDOR, mostrar modal de exclusão forçada
-      if (
-        error.response &&
-        error.response.status === 400 &&
-        error.response.data?.code === "FK_PRODUTO_FORNECEDOR"
-      ) {
-        setShowDeleteModal(false);
-        setFornecedorForceDelete(fornecedorToDelete);
-        setShowForceDeleteModal(true);
-        return;
-      }
+      console.error("Erro ao excluir fornecedor:", error);
       toastError(`Erro ao excluir fornecedor: ${error.message}`);
     } finally {
       setShowDeleteModal(false);
       setFornecedorToDelete(null);
-    }
-  };
-
-  const handleForceDeleteConfirm = async () => {
-    try {
-      if (!fornecedorForceDelete) return;
-      await deleteFornecedor(fornecedorForceDelete, true);
-      toastSuccess(
-        "Fornecedor excluído e produtos atualizados para fornecedor padrão!"
-      );
-      loadFornecedores();
-    } catch (error) {
-      toastError(`Erro ao excluir fornecedor (forçado): ${error.message}`);
-    } finally {
-      setShowForceDeleteModal(false);
-      setFornecedorForceDelete(null);
     }
   };
 
@@ -263,20 +260,56 @@ const FornecedorProdutoPage = () => {
         <ConfirmationModal
           isOpen={showDeleteModal}
           onClose={() => setShowDeleteModal(false)}
-          onConfirm={handleDeleteConfirm}
+          onConfirm={() => handleDeleteConfirm(false)}
           title="Confirmar Exclusão"
           message="Tem certeza que deseja excluir este fornecedor permanentemente?"
           confirmText="Excluir"
           cancelText="Cancelar"
         />
+        {/* Modal para exclusão em cascata */}
         <ConfirmationModal
-          isOpen={showForceDeleteModal}
-          onClose={() => setShowForceDeleteModal(false)}
-          onConfirm={handleForceDeleteConfirm}
-          title="Excluir Fornecedor com Produtos Vinculados"
-          message="Existem produtos vinculados a este fornecedor. Deseja excluir mesmo assim? Todos os produtos desse fornecedor serão movidos para o fornecedor padrão (código 1)."
-          confirmText="Excluir Forçado"
+          isOpen={cascadePrompt.open}
+          onClose={() =>
+            setCascadePrompt({
+              open: false,
+              count: 0,
+              vinculos: [],
+              onConfirm: null,
+            })
+          }
+          onConfirm={cascadePrompt.onConfirm}
+          title="Excluir em Cascata"
+          confirmText="Excluir em Cascata"
           cancelText="Cancelar"
+          message={
+            <div>
+              <div className="mb-2">
+                Este fornecedor possui{" "}
+                <b>{cascadePrompt.vinculos?.length || 0}</b> registros
+                vinculados. Deseja excluir em cascata?
+              </div>
+              {cascadePrompt.vinculos && cascadePrompt.vinculos.length > 0 && (
+                <div className="max-h-40 overflow-y-auto border rounded bg-gray-50">
+                  <table className="min-w-full text-xs">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="px-2 py-1 text-left">Código</th>
+                        <th className="px-2 py-1 text-left">Descrição</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cascadePrompt.vinculos.map((prod) => (
+                        <tr key={prod.CODIGO}>
+                          <td className="px-2 py-1">{prod.CODIGO}</td>
+                          <td className="px-2 py-1">{prod.DESCRICAO}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          }
         />
       </div>
     </>

@@ -170,9 +170,22 @@ export const restaurarProduto = async (id) => {
   return response.data;
 };
 
-export const excluirPermanentemente = async (id) => {
-  const response = await api.delete(`/produtos/lixeira/${id}`);
-  return response.data;
+export const excluirPermanentemente = async (id, cascade = false) => {
+  try {
+    const url = `/produtos/lixeira/${id}` + (cascade ? "?cascade=true" : "");
+    const response = await api.delete(url);
+    return { success: true, data: response.data };
+  } catch (error) {
+    if (error.response && error.response.status === 409) {
+      // Retorna mensagem e vínculos para o front decidir
+      return {
+        success: false,
+        error: error.response.data.error,
+        vinculos: error.response.data.vinculos,
+      };
+    }
+    throw new Error(error.response?.data?.message || "Erro ao excluir produto");
+  }
 };
 
 export const getLixeiraCount = async () => {
@@ -192,9 +205,10 @@ export const getAlertas = async () => {
 };
 
 // Alertas
-export const resolveAlerta = async (id) => {
+export const resolveAlerta = async (id, usuario) => {
   try {
-    await api.post(`/alertas/resolver/${id}`);
+    const response = await api.patch(`/alertas/resolver/${id}`, { usuario });
+    return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.message || "Erro ao resolver alerta");
   }
@@ -293,8 +307,21 @@ export const deleteFornecedor = async (codigo, force = false) => {
   const url = force
     ? `/fornecedor/${codigo}?force=true`
     : `/fornecedor/${codigo}`;
-  const response = await api.delete(url);
-  return response.data;
+  try {
+    const response = await api.delete(url);
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.status === 409) {
+      // Backend retorna 409 e pode incluir lista de vínculos
+      return {
+        vinculos: error.response.data?.vinculos || [],
+        message:
+          error.response.data?.message ||
+          "Existem registros vinculados a este fornecedor.",
+      };
+    }
+    throw error;
+  }
 };
 
 export const getProdutoAggregate = async () => {
@@ -328,8 +355,20 @@ export const deleteMarca = async (codigo, force = false) => {
 };
 export const deleteFamilia = async (codigo, force = false) => {
   const url = force ? `/familia/${codigo}?force=true` : `/familia/${codigo}`;
-  const response = await api.delete(url);
-  return response.data;
+  try {
+    const response = await api.delete(url);
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.status === 409) {
+      return {
+        vinculos: error.response.data?.vinculos || [],
+        message:
+          error.response.data?.message ||
+          "Existem registros vinculados a esta família.",
+      };
+    }
+    throw error;
+  }
 };
 export const createFamilia = async (familia) => {
   const response = await api.post("/familia", familia);

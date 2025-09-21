@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import produtoService from '../services/produtoService';
+import produtoVinculoService from '../services/produtoVinculoService';
 
 /**
  * @swagger
@@ -254,8 +255,29 @@ const produtoController = {
   async excluirPermanentemente(req: Request, res: Response, next: NextFunction) {
     try {
       const codigo = parseInt(req.params.id, 10);
-      await produtoService.excluirPermanentemente(codigo);
-      res.status(204).send();
+      const cascade = req.query.cascade === 'true';
+      try {
+        await produtoService.excluirPermanentemente(codigo);
+        return res.status(204).send();
+      } catch (err: any) {
+        // Se for erro de constraint, buscar vínculos e retornar
+        if (err.message && err.message.includes('REFERENCE constraint')) {
+          const vinculos = await produtoVinculoService.listarVinculosProduto(codigo);
+          if (!cascade) {
+            return res.status(409).json({
+              error:
+                'Existem registros vinculados a este produto. Para excluir em cascata, envie ?cascade=true',
+              vinculos,
+            });
+          } else {
+            // Excluir vínculos e tentar novamente
+            await produtoVinculoService.excluirVinculosProduto(codigo);
+            await produtoService.excluirPermanentemente(codigo);
+            return res.status(204).send();
+          }
+        }
+        throw err;
+      }
     } catch (err) {
       next(err);
     }

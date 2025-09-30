@@ -283,17 +283,17 @@ const Home = () => {
               >
                 + Novo Produto
               </Link>
-              <Link
+              {/* <Link
                 to="/estoque/movimentacao"
                 className="block p-3 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition"
               >
                 Nova Movimentação
-              </Link>
+              </Link> */}
               <Link
-                to="/estoque/movimentacaohistorico"
-                className="block p-3 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition"
+                to="/estoque/lancamento"
+                className="block p-3 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition"
               >
-                Movimentação/Histórico
+                Lançamento Estoque
               </Link>
               <Link
                 to="/relatorios"

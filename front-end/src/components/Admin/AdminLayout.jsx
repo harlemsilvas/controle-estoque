@@ -1,5 +1,15 @@
 // src/components/admin/AdminLayout.jsx
 import React, { useContext, useState } from "react";
+import {
+  FaTachometerAlt,
+  FaChartBar,
+  FaUsers,
+  FaTags,
+  FaCog,
+  FaBarcode,
+  FaSignOutAlt,
+  FaChevronDown,
+} from "react-icons/fa";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext.jsx"; // Ajuste o caminho conforme necessário
 import { useAuth } from "../../hooks/useAuth";
@@ -21,88 +31,105 @@ const AdminLayout = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-blue-700 text-white p-4 shadow-md">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Painel Administrativo</h1>
-          <nav className="flex space-x-6 items-center">
-            {/* Dashboard */}
-            <Link to="/Admin" className="hover:text-blue-300 transition-all">
-              Dashboard
+      <header className="bg-white shadow-lg">
+        <div className="container mx-auto flex justify-between items-center py-4">
+          <h1 className="text-2xl font-bold text-blue-700 flex items-center gap-2">
+            <FaTachometerAlt className="mr-2" /> Painel Administrativo
+          </h1>
+          <nav className="flex items-center gap-4">
+            <Link to="/Admin" className="admin-nav-link">
+              <FaTachometerAlt className="mr-1" /> Dashboard
             </Link>
-            {/* Dropdown de Relatórios */}
             <div
               className="relative"
               onMouseEnter={() => setIsReportsOpen(true)}
               onMouseLeave={() => setIsReportsOpen(false)}
             >
-              <button className="hover:text-blue-300 transition-all flex items-center">
-                Relatórios ▼
+              <button className="admin-nav-link flex items-center">
+                <FaChartBar className="mr-1" /> Relatórios{" "}
+                <FaChevronDown className="ml-1" />
               </button>
-
               {isReportsOpen && (
                 <div
-                  className="absolute top-full left-0 pt-2 w-48"
+                  className="absolute top-full left-0 pt-2 w-56 z-10"
                   onMouseEnter={() => setIsReportsOpen(true)}
                   onMouseLeave={() => setIsReportsOpen(false)}
                 >
                   <div className="bg-white text-gray-800 rounded-lg shadow-lg py-2">
                     <Link
                       to="/admin/relatorios/marcas"
-                      className="block px-4 py-2 hover:bg-blue-50"
+                      className="admin-dropdown-link"
                     >
-                      Relatório de Marcas
+                      <FaTags className="mr-2 text-green-500" /> Marcas
                     </Link>
                     <Link
                       to="/admin/relatorios/fornecedores"
-                      className="block px-4 py-2 hover:bg-blue-50"
+                      className="admin-dropdown-link"
                     >
-                      Relatório de Fornecedores
+                      <FaUsers className="mr-2 text-orange-500" /> Fornecedores
                     </Link>
                     <Link
                       to="/admin/relatorios/familias"
-                      className="block px-4 py-2 hover:bg-blue-50"
+                      className="admin-dropdown-link"
                     >
-                      Relatório de Famílias
+                      <FaUsers className="mr-2 text-purple-500" /> Famílias
                     </Link>
                   </div>
                 </div>
               )}
             </div>
-            {/* Demais Links */}
-            <Link
-              to="/admin/usuarios"
-              className="hover:text-blue-300 transition-all"
-            >
-              Usuários
+            <Link to="/admin/usuarios" className="admin-nav-link">
+              <FaUsers className="mr-1" /> Usuários
             </Link>
-            <Link
-              to="/admin/etiquetas"
-              className="hover:text-blue-300 transition-all"
-            >
-              Etiquetas
+            <Link to="/admin/etiquetas" className="admin-nav-link">
+              <FaBarcode className="mr-1" /> Etiquetas
             </Link>
-            <Link
-              to="/admin/totalizacao"
-              className="hover:text-blue-300 transition-all"
-            >
-              Totais
+            <Link to="/admin/totalizacao" className="admin-nav-link">
+              <FaChartBar className="mr-1" /> Totais
             </Link>
-            <Link
-              to="/admin/configuracoes"
-              className="hover:text-blue-300 transition-all"
-            >
-              Configurações
+            <Link to="/admin/configuracoes" className="admin-nav-link">
+              <FaCog className="mr-1" /> Configurações
             </Link>
-            {/* Botão Sair */}
             <button
               onClick={handleLogout}
-              className="hover:text-red-300 transition-all"
+              className="admin-nav-link text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center gap-1"
             >
-              Sair
+              <FaSignOutAlt /> Sair
             </button>
           </nav>
         </div>
+        <style>{`
+          .admin-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            color: #2563EB;
+            font-weight: 500;
+            background: transparent;
+            transition: background 0.2s, color 0.2s;
+          }
+          .admin-nav-link:hover {
+            background: #F3F4F6;
+            color: #1D4ED8;
+          }
+          .admin-dropdown-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            color: #374151;
+            font-weight: 500;
+            background: transparent;
+            transition: background 0.2s, color 0.2s;
+          }
+          .admin-dropdown-link:hover {
+            background: #F3F4F6;
+            color: #2563EB;
+          }
+        `}</style>
       </header>
 
       {/* Conteúdo Principal */}

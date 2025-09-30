@@ -1,5 +1,15 @@
 // src/components/Header.jsx
 import { Link, useNavigate } from "react-router-dom";
+import {
+  FaBox,
+  FaTags,
+  FaTruck,
+  FaUsers,
+  FaBell,
+  FaExchangeAlt,
+  FaTrash,
+  FaUserShield,
+} from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { getLixeiraCount } from "../services/api";
 import AlertBadge from "./AlertBadge";
@@ -38,94 +48,58 @@ const Header = ({ title, btnText, btnPath }) => {
       <nav className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <AlertBadge />
-          <div className="flex space-x-8 items-center">
-            <Link to="/" className="text-2xl font-bold text-blue-600">
-              EstoqueApp
+          <div className="flex items-center gap-8">
+            <Link
+              to="/"
+              className="text-2xl font-bold text-blue-600 flex items-center gap-2"
+            >
+              <FaBox className="text-blue-600" /> EstoqueApp
             </Link>
-            <div className="hidden md:flex space-x-4">
-              <Link
-                to="/produtos"
-                className="px-4 py-2 text-gray-600 hover:text-blue-600 transition"
-              >
-                Produtos
+            <div className="hidden md:flex items-center gap-2">
+              <Link to="/produtos" className="header-link">
+                <FaBox className="mr-1" /> Produtos
               </Link>
-
-              <Link
-                to="/marcas"
-                className="px-4 py-2 text-gray-600 hover:text-blue-600 transition"
-              >
-                Marcas
+              <Link to="/marcas" className="header-link">
+                <FaTags className="mr-1" /> Marcas
               </Link>
-
-              {/* Fornecedor */}
-              {/* Novo link para Fornecedores */}
-              <Link
-                to="/fornecedores"
-                className="px-4 py-2 text-gray-600 hover:text-blue-600 transition"
-              >
-                Fornecedores
+              <Link to="/fornecedores" className="header-link">
+                <FaTruck className="mr-1" /> Fornecedores
               </Link>
-              <Link
-                to="/familias"
-                className="px-4 py-2 text-gray-600 hover:text-blue-600 transition"
-              >
-                Famílias
+              <Link to="/familias" className="header-link">
+                <FaUsers className="mr-1" /> Famílias
               </Link>
               <Link
                 to="/alertas/historico"
-                className="px-4 py-2 text-orange-600 hover:text-orange-800 transition"
+                className="header-link text-orange-600 hover:text-orange-800"
               >
-                Histórico de Alertas
+                <FaBell className="mr-1" /> Alertas
               </Link>
               <Link
-                to="/estoque/movimentacao"
-                className="px-4 py-2 text-orange-600 hover:text-orange-800 transition"
+                to="/estoque/lancamento"
+                className="header-link text-orange-600 hover:text-orange-800"
               >
-                <div className="flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-1"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Mov. Estoque
-                </div>
+                <FaExchangeAlt className="mr-1" /> Mov. Estoque
               </Link>
-
               <Link
                 to="/produtos/lixeira"
-                className="px-4 py-2 text-red-600 hover:text-red-800 transition relative"
+                className="header-link text-red-600 hover:text-red-800 relative"
               >
-                Lixeira
+                <FaTrash className="mr-1" /> Lixeira
                 {deletedCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
                     {deletedCount}
                   </span>
                 )}
               </Link>
-
               <Link
                 to="/Admin"
-                className="px-4 py-2 text-orange-600 hover:text-orange-800 transition"
+                className="header-link text-orange-600 hover:text-orange-800"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 inline-block ml-1"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                />
-                Admin
+                <FaUserShield className="mr-1" /> Admin
               </Link>
             </div>
           </div>
-
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-4">
             {btnText && (
               <Link
                 to={btnPath}
@@ -134,8 +108,6 @@ const Header = ({ title, btnText, btnPath }) => {
                 {btnText}
               </Link>
             )}
-
-            {/* Botão Sair */}
             <button
               onClick={handleLogout}
               className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
@@ -145,6 +117,22 @@ const Header = ({ title, btnText, btnPath }) => {
           </div>
         </div>
       </nav>
+      <style>{`
+        .header-link {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          border-radius: 0.5rem;
+          color: #4B5563;
+          font-weight: 500;
+          transition: background 0.2s, color 0.2s;
+        }
+        .header-link:hover {
+          background: #F3F4F6;
+          color: #2563EB;
+        }
+      `}</style>
     </header>
   );
 };

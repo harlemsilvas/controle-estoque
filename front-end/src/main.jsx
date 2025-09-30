@@ -4,6 +4,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
+import LancamentoEstoque from "./pages/LancamentoEstoque";
 import Login from "./pages/LoginPage"; // Importe a página de login
 import Register from "./pages/RegisterPage"; // Importe a página de registro
 import "./index.css";
@@ -105,6 +106,15 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             }
           />
           {/* Nova rota para movimentação de estoque */}
+          {/* Rota para lançamentos de estoque modernos */}
+          <Route
+            path="/estoque/lancamento"
+            element={
+              <ProtectedRoute>
+                <LancamentoEstoque />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/estoque/movimentacao"
             element={

@@ -6,10 +6,13 @@ import {
   getMarca,
   getFamilia,
   deleteProduto,
+  getHistoricoEstoque,
 } from "../services/api";
 import { toastSuccess, toastError } from "../services/toast";
 
 const ProdutoDetalhes = () => {
+  const [historico, setHistorico] = useState([]);
+  const [mostrarMais, setMostrarMais] = useState(false);
   const { id } = useParams();
   const [produto, setProduto] = useState(null);
   const [marca, setMarca] = useState("");
@@ -72,6 +75,17 @@ const ProdutoDetalhes = () => {
     const fetchData = async () => {
       const produtoData = await getProdutoById(id);
       setProduto(produtoData);
+      // Buscar histórico de movimentações
+      if (produtoData.CODIGO_BARRAS) {
+        try {
+          const historicoData = await getHistoricoEstoque(
+            produtoData.CODIGO_BARRAS
+          );
+          setHistorico(historicoData);
+        } catch (err) {
+          setHistorico([]);
+        }
+      }
 
       if (produtoData.CODIGO_MARCA) {
         const marcaData = await getMarca(produtoData.CODIGO_MARCA);
@@ -149,6 +163,56 @@ const ProdutoDetalhes = () => {
                 </p>
               </div>
             </div>
+
+            {/* Grid de últimas movimentações */}
+            {historico.length > 0 && (
+              <div className="mt-8">
+                <h2 className="text-lg font-semibold mb-2 text-gray-700">
+                  Movimentações de Estoque
+                </h2>
+                <table className="w-full border rounded bg-gray-50">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="px-2 py-1 text-left">Data</th>
+                      <th className="px-2 py-1 text-left">Tipo</th>
+                      <th className="px-2 py-1 text-left">Quantidade</th>
+                      <th className="px-2 py-1 text-left">Usuário</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(mostrarMais
+                      ? historico.slice(0, 20)
+                      : historico.slice(0, 5)
+                    ).map((mov, idx) => (
+                      <tr key={idx} className="border-b">
+                        <td className="px-2 py-1">
+                          {new Date(mov.DATA).toLocaleString("pt-BR")}
+                        </td>
+                        <td className="px-2 py-1">{mov.TIPO_LANCAMENTO}</td>
+                        <td className="px-2 py-1">{mov.QUANTIDADE}</td>
+                        <td className="px-2 py-1">{mov.USUARIO}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {historico.length > 5 && !mostrarMais && (
+                  <button
+                    className="mt-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                    onClick={() => setMostrarMais(true)}
+                  >
+                    Ver mais movimentações
+                  </button>
+                )}
+                {mostrarMais && historico.length > 5 && (
+                  <button
+                    className="mt-2 px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                    onClick={() => setMostrarMais(false)}
+                  >
+                    Ver menos
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Botões de Ação */}
             <div className="mt-8 flex space-x-4">

@@ -2,8 +2,16 @@ import sql from 'mssql';
 
 const estoqueService = {
   async getHistoricoPorBarcode(barcode: string) {
+    // Buscar o código do produto pelo código de barras
+    const produto = await sql.query`
+      SELECT CODIGO FROM PRODUTO WHERE CODIGO_BARRAS = ${barcode}
+    `;
+    if (produto.recordset.length === 0) return [];
+    const codigoProduto = produto.recordset[0].CODIGO;
+    // Buscar até 20 movimentações pelo código do produto
     const result = await sql.query`
-      SELECT * FROM ESTOQUE_PRODUTO WHERE CODIGO_BARRAS = ${barcode} ORDER BY DATA DESC`;
+      SELECT TOP 20 * FROM ESTOQUE_PRODUTO WHERE CODIGO_PRODUTO = ${codigoProduto} ORDER BY DATA DESC
+    `;
     return result.recordset;
   },
 

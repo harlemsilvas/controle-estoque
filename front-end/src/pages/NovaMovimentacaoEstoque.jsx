@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, setLoading } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { toastSuccess, toastError } from "../services/toast";
 import Header from "../components/Header";
 import { buscarProdutos, registrarMovimentacao } from "../services/api";
@@ -9,9 +9,9 @@ const NovaMovimentacaoEstoque = () => {
   const [resultados, setResultados] = useState([]);
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [buscarNovamente, setBuscarNovamente] = useState(false); // <-- Novo estado
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const { user } = useAuth();
-  const logado = "ADMIN"; //user?.username; // Substituir por usuário logado
+  const logado = user?.nome || "admin"; // Substituir por usuário logado
   const [form, setForm] = useState({
     tipo: "E",
     quantidade: "",
@@ -25,7 +25,7 @@ const NovaMovimentacaoEstoque = () => {
     } catch (error) {
       toastError(error.message || "Erro ao atualizar lista");
     } finally {
-      setLoading(false);
+      // setLoading(false);
       setBuscarNovamente(false);
     }
   }, [termoBusca]); // Dependências da função
@@ -63,13 +63,13 @@ const NovaMovimentacaoEstoque = () => {
           return;
         }
 
-        setLoading(true);
+        // setLoading(true);
         const data = await buscarProdutos(termoCodificado);
         setResultados(data);
       } catch (error) {
         toastError(error.message || "Erro na busca de produtos");
       } finally {
-        setLoading(false);
+        // setLoading(false);
       }
     },
     [termoBusca]
@@ -214,6 +214,7 @@ const NovaMovimentacaoEstoque = () => {
         <center>
           <h2>"Controle de Estoque por Código de Barras, Nome ou Código"</h2>
         </center>
+        <h3>NovaMovimentacaoEstoque.jsx</h3>
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <div className="flex gap-4 mb-4">
             <input

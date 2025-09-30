@@ -1,4 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
+import { buscarProdutos, getProdutoById } from "../services/api";
+import { useAuth } from "../hooks/useAuth";
 import { toastSuccess, toastError } from "../services/toast";
 import Header from "../components/Header";
 import {
@@ -7,6 +11,25 @@ import {
 } from "../services/api";
 
 const MovimentacaoEstoque = () => {
+  // Estado para termo digitado e sugestões dinâmicas
+  const [termoBusca, setTermoBusca] = useState("");
+  const [sugestoes, setSugestoes] = useState([]);
+
+  // Buscar produtos conforme o usuário digita
+  useEffect(() => {
+    let ativo = true;
+    if (termoBusca.length > 0) {
+      buscarProdutos(termoBusca).then((res) => {
+        console.log("[Autocomplete] Resultado da busca:", res);
+        if (ativo) setSugestoes(res);
+      });
+    } else {
+      setSugestoes([]);
+    }
+    return () => {
+      ativo = false;
+    };
+  }, [termoBusca]);
   const [tipoForm, setTipoForm] = useState("codigo");
   const [formCodigo, setFormCodigo] = useState({
     codigoProduto: "",
@@ -14,17 +37,45 @@ const MovimentacaoEstoque = () => {
     quantidade: "",
     usuario: "",
   });
+  // Estado para lista de produtos e produto selecionado
+  const [produtos, setProdutos] = useState([]);
+  const [produtoSelecionado, setProdutoSelecionado] = useState(null);
+  // Buscar produtos ao montar o componente
+  useEffect(() => {
+    async function fetchProdutos() {
+      try {
+        const lista = await buscarProdutos();
+        setProdutos(lista);
+      } catch (err) {
+        toastError("Erro ao buscar produtos");
+      }
+    }
+    fetchProdutos();
+  }, []);
+  // Removido duplicidade, já está declarado acima
   const [formBarcode, setFormBarcode] = useState({
     codigo_barras: "",
     tipo: "E",
-    quantidade: "",
     usuario: "",
   });
+
+  // Pega usuário logado do contexto
+  const { user } = useAuth();
+
+  // Preenche usuário automaticamente ao carregar
+  useEffect(() => {
+    if (user && user.nome) {
+      setFormCodigo((prev) => ({ ...prev, usuario: user.nome }));
+      setFormBarcode((prev) => ({ ...prev, usuario: user.nome }));
+    }
+  }, [user]);
   const [loading, setLoading] = useState(false);
 
   const handleChangeCodigo = (e) => {
     setFormCodigo({ ...formCodigo, [e.target.name]: e.target.value });
-  };
+    // Validação removida, pois o autocomplete já controla produto selecionado
+  }; // <-- Add missing closing bracket here
+
   const handleChangeBarcode = (e) => {
     setFormBarcode({ ...formBarcode, [e.target.name]: e.target.value });
   };
@@ -75,38 +126,76 @@ const MovimentacaoEstoque = () => {
     }
   };
 
+  // ...existing code...
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-8">
       <Header title="Movimentação de Estoque" />
+
       <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-xl">
         <h1 className="text-2xl font-bold mb-6 text-center">
           Movimentação de Estoque
         </h1>
         <div className="flex justify-center mb-6 gap-4">
           <button
-            className={`px-4 py-2 rounded-lg font-semibold border ${tipoForm === "codigo" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"}`}
+            type="button"
+            className={`px-4 py-2 rounded ${
+              tipoForm === "codigo" ? "bg-blue-600 text-white" : "bg-gray-200"
+            }`}
             onClick={() => setTipoForm("codigo")}
           >
-            Por Código do Produto
+            Buscar por Código Interno
           </button>
           <button
-            className={`px-4 py-2 rounded-lg font-semibold border ${tipoForm === "barcode" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"}`}
+            type="button"
+            className={`px-4 py-2 rounded ${
+              tipoForm === "barcode" ? "bg-blue-600 text-white" : "bg-gray-200"
+            }`}
             onClick={() => setTipoForm("barcode")}
           >
-            Por Código de Barras
+            Buscar por Código de Barras
           </button>
         </div>
         {tipoForm === "codigo" ? (
           <form onSubmit={handleSubmitCodigo} className="space-y-4">
             <div>
-              <label className="block font-medium">Código do Produto</label>
-              <input
-                type="text"
-                name="codigoProduto"
-                value={formCodigo.codigoProduto}
-                onChange={handleChangeCodigo}
-                className="w-full border rounded px-3 py-2"
-                required
+              <label className="block font-medium">
+                Código Interno do Produto
+              </label>
+              <Autocomplete
+                options={
+                  sugestoes.length > 0
+                    ? sugestoes
+                    : produtoSelecionado
+                    ? [produtoSelecionado]
+                    : []
+                }
+                getOptionLabel={(option) => {
+                  if (!option) return "";
+                  if (typeof option === "string") return option;
+                  if (option.codigo_interno && option.DESCRICAO)
+                    return `${option.codigo_interno} - ${option.DESCRICAO}`;
+                  if (option.codigo_interno) return option.codigo_interno;
+                  return "";
+                }}
+                value={produtoSelecionado}
+                onChange={(_, newValue) => setProdutoSelecionado(newValue)}
+                inputValue={termoBusca}
+                onInputChange={(_, newInputValue) =>
+                  setTermoBusca(newInputValue)
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Código Interno"
+                    variant="outlined"
+                    required
+                  />
+                )}
+                isOptionEqualToValue={(option, value) => {
+                  if (!option || !value) return false;
+                  return option.codigo_interno === value.codigo_interno;
+                }}
+                filterOptions={(options) => options}
               />
             </div>
             <div>
@@ -142,14 +231,15 @@ const MovimentacaoEstoque = () => {
                 name="usuario"
                 value={formCodigo.usuario}
                 onChange={handleChangeCodigo}
-                className="w-full border rounded px-3 py-2"
+                className="w-full border rounded px-3 py-2 bg-gray-100"
                 required
+                readOnly={!!user?.nome}
               />
             </div>
             <button
               type="submit"
               className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
-              disabled={loading}
+              disabled={loading || !produtoSelecionado}
             >
               {loading ? "Processando..." : "Registrar Movimentação"}
             </button>
@@ -200,8 +290,9 @@ const MovimentacaoEstoque = () => {
                 name="usuario"
                 value={formBarcode.usuario}
                 onChange={handleChangeBarcode}
-                className="w-full border rounded px-3 py-2"
+                className="w-full border rounded px-3 py-2 bg-gray-100"
                 required
+                readOnly={!!user?.nome}
               />
             </div>
             <button

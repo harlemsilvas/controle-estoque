@@ -37,7 +37,7 @@ const AdminLayout = () => {
             <FaTachometerAlt className="mr-2" /> Painel Administrativo
           </h1>
           <nav className="flex items-center gap-4">
-            <Link to="/Admin" className="admin-nav-link">
+            <Link to="/admin" className="admin-nav-link">
               <FaTachometerAlt className="mr-1" /> Dashboard
             </Link>
             <div
@@ -73,6 +73,12 @@ const AdminLayout = () => {
                       className="admin-dropdown-link"
                     >
                       <FaUsers className="mr-2 text-purple-500" /> Famílias
+                    </Link>
+                    <Link
+                      to="/admin/relatorios/movimentacoes"
+                      className="admin-dropdown-link"
+                    >
+                      <FaTags className="mr-2 text-green-500" /> Movimentações
                     </Link>
                   </div>
                 </div>

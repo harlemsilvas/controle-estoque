@@ -39,6 +39,7 @@ import AdminConfiguracoes from "./pages/Admin/AdminConfiguracoes";
 import AdminRelatorioMarcas from "./pages/Admin/AdminRelatorioMarcas";
 import AdminRelatorioFamilias from "./pages/Admin/AdminRelatorioFamilias";
 import AdminRelatorioFornecedores from "./pages/Admin/AdminRelatorioFornecedores";
+import RelatorioMovimentacoes from "./pages/RelatorioMovimentacoes.jsx";
 import PrivateRoute from "./components/PrivateRoute";
 import ApiRoutesCheck from "./pages/ApiRoutesCheck";
 //const user = { username: "admin" }; // Simulação de usuário logado
@@ -158,7 +159,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           {/* <Route path="/admin" element={<AdminLayout user={user} />}> */}
           {/* Rotas protegidas */}
           <Route
-            path="/Admin"
+            path="/admin"
             element={
               <ProtectedRoute>
                 <AdminLayout />
@@ -179,6 +180,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route
               path="relatorios/familias"
               element={<AdminRelatorioFamilias />}
+            />
+            <Route
+              path="relatorios/movimentacoes"
+              element={<RelatorioMovimentacoes />}
             />
             <Route path="usuarios" element={<AdminUsuarios />} />
             <Route path="etiquetas" element={<AdminEtiquetas />} />

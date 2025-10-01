@@ -1,3 +1,20 @@
+// Relatório de movimentações de estoque
+export const getMovimentacoes = async ({
+  dataInicio,
+  dataFim,
+  limit = 10,
+  orderBy = "data DESC",
+  page = 1,
+} = {}) => {
+  const params = {};
+  if (dataInicio) params.dataInicio = dataInicio;
+  if (dataFim) params.dataFim = dataFim;
+  if (limit) params.limit = limit;
+  if (orderBy) params.orderBy = orderBy;
+  if (page) params.page = page;
+  const response = await api.get("/relatorio/movimentacoes", { params });
+  return response.data;
+};
 import axios from "axios";
 
 export const api = axios.create({

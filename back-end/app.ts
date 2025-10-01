@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
 import errorHandler from './middleware/errorHandler';
+import { relatorioMovimentacoes } from './controllers/relatorioController';
 // Controllers
 import produtoController from './controllers/produtoController';
 import estoqueController from './controllers/estoqueController';
@@ -27,8 +28,33 @@ connectToDatabase().catch((err) => {
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+// CORS antes de qualquer rota
+app.use(
+  cors({
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  })
+);
+// Middleware extra para garantir o header em todas as respostas
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+  );
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 app.use(express.json());
+
+// Relatório de movimentações de estoque
+app.get('/relatorio/movimentacoes', relatorioMovimentacoes);
 // Estoque resumo (15 mais e 15 menos)
 app.get('/estoque-produto', estoqueController.getEstoqueResumo);
 

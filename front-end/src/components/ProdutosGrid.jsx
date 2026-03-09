@@ -15,9 +15,9 @@ const ProdutosGrid = ({
     (produto) =>
       produto.DESCRICAO.toLowerCase().includes(searchTerm.toLowerCase()) ||
       produto.CODIGO_INTERNO?.toLowerCase().includes(
-        searchTerm.toLowerCase()
+        searchTerm.toLowerCase(),
       ) ||
-      produto.CODIGO_BARRAS?.toLowerCase().includes(searchTerm.toLowerCase())
+      produto.CODIGO_BARRAS?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (

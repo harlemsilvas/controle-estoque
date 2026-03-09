@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import Header from "../components/Header";
+import { Link } from "react-router-dom";
+import { FaPlus } from "react-icons/fa";
 import {
   deleteProduto,
   getProdutos,
@@ -194,6 +196,15 @@ const Produtos = () => {
       <Header />
       <div className="container mx-auto px-6 py-4">
         <div className="flex flex-wrap gap-4 mb-4 items-end">
+          <div className="flex items-center gap-2">
+            <Link
+              to="/produto/novo"
+              className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              title="Novo produto"
+            >
+              <FaPlus size={14} />
+            </Link>
+          </div>
           <input
             type="text"
             placeholder="Buscar por nome, código ou barras..."

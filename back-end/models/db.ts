@@ -1,8 +1,8 @@
 import sql from 'mssql';
 
 export const dbConfig: sql.config = {
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+  user: process.env.DB_USER || 'harlem',
+  password: process.env.DB_PASSWORD || 'xlaver',
   // server: 'HARLEM-NOTE',
   server: process.env.DB_SERVER || 'SERVER-ABC',
   database: process.env.DB_NAME || 'HRM1',

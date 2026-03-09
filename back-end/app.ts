@@ -152,7 +152,10 @@ app.use('/familia', familiaRouter);
 // Usuário
 usuarioRouter.get('/', usuarioController.listarTodos);
 usuarioRouter.post('/', usuarioController.criar);
+usuarioRouter.put('/:id', usuarioController.atualizarDados);
 usuarioRouter.put('/:id/status', usuarioController.atualizarStatus);
+usuarioRouter.put('/:id/role', usuarioController.atualizarRole);
+usuarioRouter.put('/:id/senha', usuarioController.atualizarSenha);
 app.use('/usuarios', usuarioRouter);
 
 // Alertas

@@ -8,19 +8,36 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true); // Estado de carregamento
 
   useEffect(() => {
-    // Recupera os dados do usuário do localStorage
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const storedToken = localStorage.getItem("token");
+    console.log("[AuthProvider] useEffect - storedUser:", storedUser);
+    console.log("[AuthProvider] useEffect - storedToken:", storedToken);
+
+    if (storedUser && storedToken) {
+      const parsedUser = JSON.parse(storedUser);
+      if (validateToken(storedToken)) {
+        setUser(parsedUser);
+        console.log("[AuthProvider] useEffect - user setado:", parsedUser);
+      } else {
+        logout();
+        console.log("[AuthProvider] useEffect - token inválido, logout");
+      }
+    } else {
+      setUser(null);
     }
-    setLoading(false); // Finaliza o carregamento
+    setLoading(false);
   }, []);
 
   // Função para login
   const login = async (userData, token) => {
+    console.log("[AuthProvider] login - userData:", userData);
     setUser(userData); // Atualiza o estado do usuário
     localStorage.setItem("user", JSON.stringify(userData)); // Salva no localStorage
     localStorage.setItem("token", token); // Salva o token no localStorage
+    console.log(
+      "[AuthProvider] login - user salvo:",
+      localStorage.getItem("user")
+    );
   };
 
   // Função para logout
@@ -32,36 +49,27 @@ export const AuthProvider = ({ children }) => {
 
   // Função para validar o token (exemplo básico)
   const validateToken = (token) => {
-    if (!token) return false;
-
+    if (!token) {
+      console.warn("[AuthProvider] validateToken: token ausente");
+      return false;
+    }
     try {
-      const payload = JSON.parse(atob(token.split(".")[1])); // Decodifica o token
+      const parts = token.split(".");
+      if (parts.length !== 3) {
+        console.warn("[AuthProvider] validateToken: token malformado", token);
+        return false;
+      }
+      const payload = JSON.parse(atob(parts[1])); // Decodifica o token
       const isExpired = payload.exp * 1000 < Date.now(); // Verifica se o token expirou
+      if (isExpired) {
+        console.warn("[AuthProvider] validateToken: token expirado", payload);
+      }
       return !isExpired; // Retorna true se o token for válido
     } catch (err) {
-      console.error("Erro ao validar token:", err);
+      console.error("[AuthProvider] Erro ao validar token:", err, token);
       return false;
     }
   };
-
-  // Verifica se há um usuário salvo ao carregar a aplicação
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    const storedToken = localStorage.getItem("token");
-
-    if (storedUser && storedToken) {
-      const parsedUser = JSON.parse(storedUser);
-
-      // Valida o token antes de definir o usuário
-      if (validateToken(storedToken)) {
-        setUser(parsedUser);
-      } else {
-        logout(); // Se o token for inválido, faz logout
-      }
-    }
-
-    setLoading(false); // Finaliza o carregamento
-  }, []);
 
   // Valida se o usuário está autenticado
   const isAuthenticated = !!user;

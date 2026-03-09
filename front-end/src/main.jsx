@@ -21,6 +21,7 @@ import MovimentacaoEstoque from "./pages/MovimentacaoEstoque";
 import NovaMovimentacaoEstoque from "./pages/NovaMovimentacaoEstoque";
 import NotFound from "./components/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 import RegisterPage from "./pages/RegisterPage";
 import RecoverPage from "./pages/RecoverPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -161,9 +162,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route
             path="/admin"
             element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <AdminLayout />
-              </ProtectedRoute>
+              </AdminRoute>
             }
           >
             <Route index element={<AdminDashboard />} />

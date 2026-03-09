@@ -1,3 +1,24 @@
+export async function atualizarDadosUsuario(
+  id: number,
+  username: string,
+  email: string
+): Promise<void> {
+  const pool = await connectToDatabase();
+  await pool
+    .request()
+    .input('id', sql.Int, id)
+    .input('username', sql.VarChar(50), username)
+    .input('email', sql.VarChar(100), email)
+    .query('UPDATE users SET username = @username, email = @email WHERE id = @id');
+}
+export async function atualizarRoleUsuario(id: number, role: string): Promise<void> {
+  const pool = await connectToDatabase();
+  await pool
+    .request()
+    .input('id', sql.Int, id)
+    .input('role', sql.VarChar(20), role)
+    .query('UPDATE users SET role = @role WHERE id = @id');
+}
 export async function atualizarStatusUsuario(id: number, is_active: boolean): Promise<void> {
   const pool = await connectToDatabase();
   await pool

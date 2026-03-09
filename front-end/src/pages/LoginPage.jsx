@@ -1,12 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { LockClosedIcon } from "@heroicons/react/24/outline";
+import { AuthContext } from "../context/AuthContext";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -47,7 +49,12 @@ const LoginPage = () => {
 
     try {
       // Chama handleLogin com os dados do formulário
-      await handleLogin(formData);
+      const data = await handleLogin(formData);
+
+      // Atualiza o contexto de autenticação com user e token
+      if (data && data.user && data.token) {
+        await login(data.user, data.token);
+      }
       toast.success("Login realizado com sucesso!");
       navigate("/dashboard"); // Redireciona apenas em caso de sucesso
     } catch (error) {

@@ -47,7 +47,6 @@ const Header = ({ title, btnText, btnPath }) => {
     <header className="bg-white shadow-lg">
       <nav className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <AlertBadge />
           <div className="flex items-center gap-8">
             <Link
               to="/"
@@ -92,7 +91,7 @@ const Header = ({ title, btnText, btnPath }) => {
                 )}
               </Link>
               <Link
-                to="/Admin"
+                to="/admin"
                 className="header-link text-orange-600 hover:text-orange-800"
               >
                 <FaUserShield className="mr-1" /> Admin
@@ -100,6 +99,7 @@ const Header = ({ title, btnText, btnPath }) => {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <AlertBadge />
             {btnText && (
               <Link
                 to={btnPath}

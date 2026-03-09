@@ -25,7 +25,7 @@ const AlertBadge = () => {
 
   const handleResolveConfirm = async () => {
     try {
-      await resolveAlerta(selectedAlert.ID, user?.nome || "admin"); // Usuário fixo "admin" por enquanto
+      await resolveAlerta(selectedAlert.ID, user?.username || "admin"); // Usa username do usuário autenticado
       // Remover o alerta resolvido da lista localmente
       setAlerts(alerts.filter((a) => a.ID !== selectedAlert.ID));
       setAlertCount((prev) => prev - 1);

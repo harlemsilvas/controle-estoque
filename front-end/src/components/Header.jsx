@@ -80,6 +80,12 @@ const Header = ({ title, btnText, btnPath }) => {
                 <FaExchangeAlt className="mr-1" /> Mov. Estoque
               </Link>
               <Link
+                to="/configuracoes/lancamento"
+                className="header-link"
+              >
+                ⚙ Configurações
+              </Link>
+              <Link
                 to="/produtos/lixeira"
                 className="header-link text-red-600 hover:text-red-800 relative"
               >

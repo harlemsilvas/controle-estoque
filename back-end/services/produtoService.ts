@@ -53,7 +53,7 @@ const produtoService = {
 
       orderDir,
     });
-    console.log('[listarTodos] Valor de familia:', familia);
+    // console.log('[listarTodos] Valor de familia:', familia);
     // Sanitização de campos de ordenação
     const allowedOrderBy = ['CODIGO', 'DESCRICAO'];
     const allowedOrderDir = ['ASC', 'DESC'];
@@ -66,14 +66,14 @@ const produtoService = {
     // Consulta paginada
     const query = `SELECT * FROM PRODUTO WHERE ${where} ORDER BY ${orderField} ${orderDirection} OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`;
     const totalQuery = `SELECT COUNT(*) as total FROM PRODUTO WHERE ${where}`;
-    console.log('[listarTodos] Query:', query);
+    // console.log('[listarTodos] Query:', query);
     const request = new sql.Request()
       .input('offset', sql.Int, offset)
       .input('limit', sql.Int, limit);
     if (fornecedor) request.input('fornecedor', sql.VarChar, fornecedor);
-    console.log('🚀 ~ listarTodos ~ marca:', marca);
+    // console.log('🚀 ~ listarTodos ~ marca:', marca);
     if (marca) request.input('marca', sql.VarChar, marca);
-    console.log('🚀 ~ listarTodos ~ familia:', familia);
+    // console.log('🚀 ~ listarTodos ~ familia:', familia);
     if (familia) request.input('familia', sql.VarChar, familia);
     if (search) request.input('search', sql.VarChar, `%${search}%`);
     const produtosResult = await request.query(query);

@@ -43,6 +43,7 @@ import AdminRelatorioFornecedores from "./pages/Admin/AdminRelatorioFornecedores
 import RelatorioMovimentacoes from "./pages/RelatorioMovimentacoes.jsx";
 import PrivateRoute from "./components/PrivateRoute";
 import ApiRoutesCheck from "./pages/ApiRoutesCheck";
+import ConfiguracoesLancamento from "./pages/ConfiguracoesLancamento";
 //const user = { username: "admin" }; // Simulação de usuário logado
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -155,6 +156,14 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/forgot-password" element={<RecoverPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/api-check" element={<ApiRoutesCheck />} />
+          <Route
+            path="/configuracoes/lancamento"
+            element={
+              <ProtectedRoute>
+                <ConfiguracoesLancamento />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Rotas administrativas */}
           {/* <Route path="/admin" element={<AdminLayout user={user} />}> */}

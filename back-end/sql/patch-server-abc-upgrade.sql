@@ -87,19 +87,48 @@ IF NOT EXISTS (SELECT * FROM sys.default_constraints WHERE parent_object_id = OB
 GO
 
 -- users: garantir is_active NOT NULL e default
-ALTER TABLE [dbo].[users] ALTER COLUMN [is_active] [bit] NOT NULL
+-- Primeiro, ajustar registros antigos que estejam nulos
+UPDATE [dbo].[users]
+	 SET [is_active] = 1
+ WHERE [is_active] IS NULL;
 GO
-IF NOT EXISTS (SELECT * FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('users') AND name = 'DF_users_is_active')
+
+-- Agora sim, alterar a coluna para NOT NULL
+ALTER TABLE [dbo].[users] ALTER COLUMN [is_active] [bit] NOT NULL;
+GO
+IF NOT EXISTS (
+	SELECT 1
+	FROM sys.default_constraints dc
+	JOIN sys.columns c ON c.object_id = dc.parent_object_id AND c.column_id = dc.parent_column_id
+	WHERE dc.parent_object_id = OBJECT_ID('dbo.users')
+	  AND c.name = 'is_active'
+)
 	ALTER TABLE [dbo].[users] ADD CONSTRAINT DF_users_is_active DEFAULT(1) FOR [is_active]
 GO
 
+
+
 -- users: garantir defaults para role e created_at
-IF NOT EXISTS (SELECT * FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('users') AND name = 'DF_users_role')
+IF NOT EXISTS (
+	SELECT 1
+	FROM sys.default_constraints dc
+	JOIN sys.columns c ON c.object_id = dc.parent_object_id AND c.column_id = dc.parent_column_id
+	WHERE dc.parent_object_id = OBJECT_ID('dbo.users')
+	  AND c.name = 'role'
+)
 	ALTER TABLE [dbo].[users] ADD CONSTRAINT DF_users_role DEFAULT('user') FOR [role]
 GO
-IF NOT EXISTS (SELECT * FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('users') AND name = 'DF_users_created_at')
+IF NOT EXISTS (
+	SELECT 1
+	FROM sys.default_constraints dc
+	JOIN sys.columns c ON c.object_id = dc.parent_object_id AND c.column_id = dc.parent_column_id
+	WHERE dc.parent_object_id = OBJECT_ID('dbo.users')
+	  AND c.name = 'created_at'
+)
 	ALTER TABLE [dbo].[users] ADD CONSTRAINT DF_users_created_at DEFAULT(getdate()) FOR [created_at]
 GO
+
+
 
 -- PasswordResetTokens: garantir FK
 IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_PasswordResetTokens_users')

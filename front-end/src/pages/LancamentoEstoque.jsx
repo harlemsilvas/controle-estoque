@@ -1,10 +1,39 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import {
   movimentarEstoquePorCodigo,
   movimentarEstoquePorBarcode,
+  getProdutoPorBarcode,
 } from "../services/api";
+
+let audioCtx;
+const playErrorBeep = (enabled = true) => {
+  if (!enabled) return;
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    if (!audioCtx) {
+      audioCtx = new AudioContext();
+    }
+    const duration = 0.15;
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    oscillator.type = "square";
+    oscillator.frequency.value = 880;
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.0001,
+      audioCtx.currentTime + duration,
+    );
+    oscillator.start(audioCtx.currentTime);
+    oscillator.stop(audioCtx.currentTime + duration);
+  } catch (e) {
+    // Silencia erros de áudio para não atrapalhar o fluxo
+  }
+};
 
 const LancamentoEstoque = () => {
   const navigate = window.history && window.history.back ? null : null;
@@ -17,6 +46,30 @@ const LancamentoEstoque = () => {
   const [sugestoes, setSugestoes] = useState([]);
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [buscando, setBuscando] = useState(false);
+  const [autoLancarPorLeitura, setAutoLancarPorLeitura] = useState(false);
+  const [beepErroAtivo, setBeepErroAtivo] = useState(true);
+  const [tempoLimpezaErroMs, setTempoLimpezaErroMs] = useState(1000);
+
+  // Carrega configurações salvas (Configurações de Lançamento)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("lancamentoEstoqueConfig");
+      if (saved) {
+        const cfg = JSON.parse(saved);
+        if (typeof cfg.autoLancarPorLeitura === "boolean") {
+          setAutoLancarPorLeitura(cfg.autoLancarPorLeitura);
+        }
+        if (typeof cfg.beepErro === "boolean") {
+          setBeepErroAtivo(cfg.beepErro);
+        }
+        if (typeof cfg.tempoLimpezaErroMs === "number") {
+          setTempoLimpezaErroMs(cfg.tempoLimpezaErroMs);
+        }
+      }
+    } catch (e) {
+      // ignora erros de leitura de config
+    }
+  }, []);
   // Busca inteligente: só busca após 4 caracteres
   React.useEffect(() => {
     if (busca.length < 4) {
@@ -36,6 +89,77 @@ const LancamentoEstoque = () => {
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [primeiroLancamento, setPrimeiroLancamento] = useState(true);
 
+  const handleBuscaKeyDown = async (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const term = busca.trim();
+    if (!term) return;
+    const onlyDigits = term.replace(/\D/g, "");
+    const isPossibleEan = onlyDigits.length === 12 || onlyDigits.length === 13;
+
+    if (!isPossibleEan) return; // deixa a busca textual normal agir (useEffect)
+
+    try {
+      setBuscando(true);
+      const produto = await getProdutoPorBarcode(onlyDigits);
+      if (produto) {
+        const normalizado = {
+          ...produto,
+          codigo_interno:
+            produto.codigo_interno || produto.CODIGO_INTERNO || produto.CODIGO,
+          estoque_atual:
+            produto.estoque_atual ?? produto.ESTOQUE_ATUAL ?? undefined,
+        };
+        // Modo "caixa": lança automaticamente com a última configuração
+        if (autoLancarPorLeitura) {
+          const ultimoTipo =
+            movimentacoes[movimentacoes.length - 1]?.tipo ||
+            tipoMovimentacao ||
+            "entrada";
+          const estoqueAntes =
+            normalizado.ESTOQUE_ATUAL ?? normalizado.estoque_atual ?? "-";
+          setMovimentacoes([
+            ...movimentacoes,
+            {
+              produto: normalizado,
+              quantidade: 1,
+              tipo: ultimoTipo,
+              estoqueAntes,
+            },
+          ]);
+          setBusca("");
+          setSugestoes([]);
+          setLancarErro(null);
+          setPrimeiroLancamento(false);
+        } else {
+          // Fluxo atual: apenas seleciona o produto e deixa o usuário definir quantidade/tipo
+          setProdutoSelecionado(normalizado);
+          setSugestoes([]);
+          setLancarErro(null);
+        }
+      } else {
+        setLancarErro(
+          "Produto não encontrado para o código de barras informado.",
+        );
+        playErrorBeep(beepErroAtivo);
+        setTimeout(() => {
+          setBusca("");
+          setLancarErro(null);
+        }, tempoLimpezaErroMs);
+      }
+    } catch (err) {
+      console.error("Erro ao buscar produto por barcode:", err);
+      setLancarErro("Erro ao buscar produto por código de barras.");
+      playErrorBeep(beepErroAtivo);
+      setTimeout(() => {
+        setBusca("");
+        setLancarErro(null);
+      }, tempoLimpezaErroMs);
+    } finally {
+      setBuscando(false);
+    }
+  };
+
   // Estrutura visual inicial
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-8">
@@ -48,7 +172,24 @@ const LancamentoEstoque = () => {
           placeholder="Digite código de barras, EAN, descrição ou código interno"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
+          onKeyDown={handleBuscaKeyDown}
         />
+        <div className="mb-2 flex items-center gap-2 text-sm text-gray-700">
+          <input
+            id="auto-lancar"
+            type="checkbox"
+            className="h-4 w-4"
+            checked={autoLancarPorLeitura}
+            onChange={(e) => setAutoLancarPorLeitura(e.target.checked)}
+          />
+          <label htmlFor="auto-lancar">
+            Lançar automaticamente ao ler código de barras (quantidade = 1),
+            usando o mesmo tipo da última movimentação.
+          </label>
+        </div>
+        {lancarErro && (
+          <div className="mb-2 text-sm text-red-600">{lancarErro}</div>
+        )}
         {buscando && (
           <div className="mb-2 text-sm text-gray-500">Buscando...</div>
         )}
@@ -181,7 +322,7 @@ const LancamentoEstoque = () => {
                               setPrimeiroLancamento(true);
                             }
                             setMovimentacoes(
-                              movimentacoes.filter((_, i) => i !== idx)
+                              movimentacoes.filter((_, i) => i !== idx),
                             );
                           }}
                         >
@@ -192,7 +333,7 @@ const LancamentoEstoque = () => {
                           title="Excluir"
                           onClick={() =>
                             setMovimentacoes(
-                              movimentacoes.filter((_, i) => i !== idx)
+                              movimentacoes.filter((_, i) => i !== idx),
                             )
                           }
                         >
@@ -261,7 +402,7 @@ const LancamentoEstoque = () => {
                   setLancarSucesso("Movimentações lançadas com sucesso!");
                 } else {
                   setLancarErro(
-                    "Algumas movimentações falharam: " + erros.join(", ")
+                    "Algumas movimentações falharam: " + erros.join(", "),
                   );
                 }
                 setIsLancarLoading(false);

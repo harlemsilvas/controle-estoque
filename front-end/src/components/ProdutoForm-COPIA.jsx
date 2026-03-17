@@ -14,8 +14,6 @@ const ProdutoForm = ({
   onCancel,
   isEdit = false,
 }) => {
-  const getOptionId = (option) => option?.CODIGO || option?.id || option?.codigo || "sem-id";
-
   if (loading) return <div className="text-center mt-8">Carregando...</div>;
 
   return (
@@ -74,11 +72,6 @@ const ProdutoForm = ({
                   getOptionLabel={(option) =>
                     option.DESCRICAO || option.nome || ""
                   }
-                  renderOption={(props, option, state) => (
-                    <li {...props} key={`marca-${getOptionId(option)}-${state.index}`}>
-                      {option.DESCRICAO || option.nome || ""}
-                    </li>
-                  )}
                   isOptionEqualToValue={(option, value) =>
                     (option.CODIGO || option.id || option.codigo) ===
                     (value.CODIGO || value.id || value.codigo)
@@ -121,11 +114,6 @@ const ProdutoForm = ({
                     getOptionLabel={(option) =>
                       option.DESCRICAO || option.nome || ""
                     }
-                    renderOption={(props, option, state) => (
-                      <li {...props} key={`familia-${getOptionId(option)}-${state.index}`}>
-                        {option.DESCRICAO || option.nome || ""}
-                      </li>
-                    )}
                     isOptionEqualToValue={(option, value) =>
                       (option.CODIGO || option.id || option.codigo) ===
                       (value?.CODIGO || value?.id || value?.codigo)
@@ -200,11 +188,6 @@ const ProdutoForm = ({
                 <Autocomplete
                   options={fornecedores}
                   getOptionLabel={(option) => option.NOME || option.nome || ""}
-                  renderOption={(props, option, state) => (
-                    <li {...props} key={`fornecedor-${getOptionId(option)}-${state.index}`}>
-                      {option.NOME || option.nome || ""}
-                    </li>
-                  )}
                   isOptionEqualToValue={(option, value) =>
                     (option.CODIGO || option.id || option.codigo) ===
                     (value.CODIGO || value.id || value.codigo)

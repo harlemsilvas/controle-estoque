@@ -5,7 +5,7 @@ export const dbConfig: sql.config = {
   password: process.env.DB_PASSWORD || 'xlaver',
   // server: 'HARLEM-NOTE',
   server: process.env.DB_SERVER || 'SERVER-ABC',
-  database: process.env.DB_NAME || 'HRM1',
+  database: process.env.DB_NAME || 'HRM',
   options: {
     encrypt: process.env.DB_ENCRYPT === 'true',
     trustServerCertificate: process.env.DB_TRUST_SERVER_CERTIFICATE === 'true',

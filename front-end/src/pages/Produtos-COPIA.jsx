@@ -13,29 +13,39 @@ import {
 import { toastSuccess, toastError } from "../services/toast";
 import ProdutosTable from "../components/ProdutosTable";
 
+const FILTERS_KEY = "produtos_filtros";
+
 const Produtos = () => {
-  const getOptionId = (option) =>
-    option?.CODIGO || option?.id || option?.codigo || "sem-id";
+  // Carregar filtros do localStorage se existirem
+  const saved = (() => {
+    try {
+      return JSON.parse(localStorage.getItem(FILTERS_KEY)) || {};
+    } catch {
+      return {};
+    }
+  })();
   const [produtos, setProdutos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(saved.searchTerm || "");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
   const [showSimpleDeleteModal, setShowSimpleDeleteModal] = useState(false);
   const [relatedRecords, setRelatedRecords] = useState([]);
   // Novos estados para paginação/filtros/ordenação
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(saved.page || 1);
   const [limit, setLimit] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
-  const [fornecedor, setFornecedor] = useState("");
-  const [marca, setMarca] = useState("");
+  const [fornecedor, setFornecedor] = useState(saved.fornecedor || "");
+  const [marca, setMarca] = useState(saved.marca || "");
   const [marcas, setMarcas] = useState([]);
   const [marcasLoading, setMarcasLoading] = useState(false);
   const [fornecedores, setFornecedores] = useState([]);
   const [fornecedoresLoading, setFornecedoresLoading] = useState(false);
-  const [fornecedorInput, setFornecedorInput] = useState("");
-  const [orderBy, setOrderBy] = useState("CODIGO");
-  const [orderDir, setOrderDir] = useState("asc");
+  const [fornecedorInput, setFornecedorInput] = useState(
+    saved.fornecedorInput || ""
+  );
+  const [orderBy, setOrderBy] = useState(saved.orderBy || "CODIGO");
+  const [orderDir, setOrderDir] = useState(saved.orderDir || "asc");
 
   // Buscar fornecedores dinamicamente conforme digita
   useEffect(() => {
@@ -75,7 +85,7 @@ const Produtos = () => {
           orderDir: "asc",
         });
         setMarcas(
-          Array.isArray(marc?.data) ? marc.data : marc?.data?.data || [],
+          Array.isArray(marc?.data) ? marc.data : marc?.data?.data || []
         );
       } catch {
         setMarcas([]);
@@ -84,6 +94,22 @@ const Produtos = () => {
     };
     fetchMarcas();
   }, []);
+
+  // Salvar filtros no localStorage sempre que mudarem
+  useEffect(() => {
+    localStorage.setItem(
+      FILTERS_KEY,
+      JSON.stringify({
+        searchTerm,
+        fornecedor,
+        fornecedorInput,
+        marca,
+        orderBy,
+        orderDir,
+        page,
+      })
+    );
+  }, [searchTerm, fornecedor, fornecedorInput, marca, orderBy, orderDir, page]);
 
   useEffect(() => {
     const fetchProdutos = async () => {
@@ -145,7 +171,7 @@ const Produtos = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-        },
+        }
       );
 
       if (response.ok) {
@@ -158,7 +184,7 @@ const Produtos = () => {
     } catch (error) {
       toastError(
         "Erro ao excluir produto e registros relacionados.",
-        error.message,
+        error.message
       );
     } finally {
       setShowDeleteModal(false); // Fecha o modal
@@ -191,28 +217,20 @@ const Produtos = () => {
               options={fornecedores}
               loading={fornecedoresLoading}
               getOptionLabel={(option) => option.NOME || option.nome || ""}
-              renderOption={(props, option, state) => (
-                <li
-                  {...props}
-                  key={`fornecedor-${getOptionId(option)}-${state.index}`}
-                >
-                  {option.NOME || option.nome || ""}
-                </li>
-              )}
               isOptionEqualToValue={(option, value) =>
                 (option.CODIGO || option.id || option.codigo) ===
                 (value.CODIGO || value.id || value.codigo)
               }
               value={
                 fornecedores.find(
-                  (f) => (f.CODIGO || f.id || f.codigo) === fornecedor,
+                  (f) => (f.CODIGO || f.id || f.codigo) === fornecedor
                 ) || null
               }
               onChange={(_, newValue) => {
                 setFornecedor(
                   newValue
                     ? newValue.CODIGO || newValue.id || newValue.codigo
-                    : "",
+                    : ""
                 );
               }}
               inputValue={fornecedorInput}
@@ -236,14 +254,6 @@ const Produtos = () => {
               options={marcas}
               loading={marcasLoading}
               getOptionLabel={(option) => option.DESCRICAO || option.nome || ""}
-              renderOption={(props, option, state) => (
-                <li
-                  {...props}
-                  key={`marca-${getOptionId(option)}-${state.index}`}
-                >
-                  {option.DESCRICAO || option.nome || ""}
-                </li>
-              )}
               isOptionEqualToValue={(option, value) =>
                 (option.CODIGO || option.id || option.codigo) ===
                 (value.CODIGO || value.id || value.codigo)
@@ -256,7 +266,7 @@ const Produtos = () => {
                 setMarca(
                   newValue
                     ? newValue.CODIGO || newValue.id || newValue.codigo
-                    : "",
+                    : ""
                 );
               }}
               renderInput={(params) => (
@@ -283,6 +293,7 @@ const Produtos = () => {
                 setOrderBy("CODIGO");
                 setOrderDir("asc");
                 setPage(1);
+                localStorage.removeItem(FILTERS_KEY);
               }}
               className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 border border-gray-300 text-gray-700"
               style={{ height: 40 }}
@@ -419,8 +430,8 @@ const Produtos = () => {
                           value === null || value === ""
                             ? "N/A"
                             : isDate
-                              ? new Date(value).toLocaleDateString("pt-BR")
-                              : value;
+                            ? new Date(value).toLocaleDateString("pt-BR")
+                            : value;
                         // Usa key composta para evitar duplicidade
                         return (
                           <li key={key + "-" + uniqueKey}>

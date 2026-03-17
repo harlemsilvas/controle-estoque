@@ -89,29 +89,6 @@ const LancamentoEstoque = () => {
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [primeiroLancamento, setPrimeiroLancamento] = useState(true);
 
-  const getCodigoProduto = (produto) => {
-    const bruto =
-      produto?.CODIGO ?? produto?.codigo_interno ?? produto?.CODIGO_INTERNO;
-    const codigo = Number(bruto);
-    if (!Number.isInteger(codigo) || codigo <= 0) return null;
-    return codigo;
-  };
-
-  const getCodigoBarras = (produto) => {
-    return String(produto?.CODIGO_BARRAS ?? produto?.codigo_barras ?? "").trim();
-  };
-
-  const normalizarProduto = (produto) => {
-    const codigoProduto = getCodigoProduto(produto);
-    const codigoBarras = getCodigoBarras(produto);
-    return {
-      ...produto,
-      codigo_interno: codigoProduto ?? "",
-      CODIGO_BARRAS: codigoBarras,
-      estoque_atual: produto?.estoque_atual ?? produto?.ESTOQUE_ATUAL ?? undefined,
-    };
-  };
-
   const handleBuscaKeyDown = async (e) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
@@ -126,7 +103,13 @@ const LancamentoEstoque = () => {
       setBuscando(true);
       const produto = await getProdutoPorBarcode(onlyDigits);
       if (produto) {
-        const normalizado = normalizarProduto(produto);
+        const normalizado = {
+          ...produto,
+          codigo_interno:
+            produto.codigo_interno || produto.CODIGO_INTERNO || produto.CODIGO,
+          estoque_atual:
+            produto.estoque_atual ?? produto.ESTOQUE_ATUAL ?? undefined,
+        };
         // Modo "caixa": lança automaticamente com a última configuração
         if (autoLancarPorLeitura) {
           const ultimoTipo =
@@ -221,9 +204,9 @@ const LancamentoEstoque = () => {
                     ? "bg-blue-200"
                     : ""
                 }`}
-                onClick={() => setProdutoSelecionado(normalizarProduto(produto))}
+                onClick={() => setProdutoSelecionado(produto)}
               >
-                {getCodigoProduto(produto) ?? "-"} - {produto.DESCRICAO}
+                {produto.codigo_interno} - {produto.DESCRICAO}
               </li>
             ))}
           </ul>
@@ -273,7 +256,7 @@ const LancamentoEstoque = () => {
                 setMovimentacoes([
                   ...movimentacoes,
                   {
-                    produto: normalizarProduto(produtoSelecionado),
+                    produto: produtoSelecionado,
                     quantidade,
                     tipo:
                       tipoMovimentacao || movimentacoes[0]?.tipo || "entrada",
@@ -322,7 +305,7 @@ const LancamentoEstoque = () => {
                   {movimentacoes.map((mov, idx) => (
                     <tr key={idx} className="border-b">
                       <td className="px-4 py-2 min-w-[320px] w-1/2 whitespace-nowrap overflow-hidden text-ellipsis">
-                        {getCodigoProduto(mov.produto) ?? "-"} - {mov.produto.DESCRICAO}
+                        {mov.produto.codigo_interno} - {mov.produto.DESCRICAO}
                       </td>
                       <td className="px-4 py-2">{mov.estoqueAntes}</td>
                       <td className="px-4 py-2">{mov.quantidade}</td>
@@ -385,22 +368,20 @@ const LancamentoEstoque = () => {
                 for (const mov of movimentacoes) {
                   try {
                     const tipoBackend = mapTipo(mov.tipo);
-                    const codigoProduto = getCodigoProduto(mov.produto);
-                    const codigoBarras = getCodigoBarras(mov.produto);
-                    if (codigoProduto) {
+                    if (mov.produto.codigo_interno) {
                       await movimentarEstoquePorCodigo({
-                        codigoProduto,
+                        codigoProduto: mov.produto.codigo_interno,
                         tipo: tipoBackend,
-                        quantidade: Number(mov.quantidade),
+                        quantidade: mov.quantidade,
                         usuario: (
                           localStorage.getItem("usuario") || "admin"
                         ).substring(0, 8),
                       });
-                    } else if (codigoBarras) {
+                    } else if (mov.produto.CODIGO_BARRAS) {
                       await movimentarEstoquePorBarcode({
-                        codigo_barras: codigoBarras,
+                        codigo_barras: mov.produto.CODIGO_BARRAS,
                         tipo: tipoBackend,
-                        quantidade: Number(mov.quantidade),
+                        quantidade: mov.quantidade,
                         usuario: (
                           localStorage.getItem("usuario") || "admin"
                         ).substring(0, 8),

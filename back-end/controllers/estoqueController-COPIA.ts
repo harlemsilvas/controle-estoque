@@ -1,12 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import estoqueService from '../services/estoqueService';
 
-const badRequest = (message: string) => {
-  const error = new Error(message) as Error & { status?: number };
-  error.status = 400;
-  return error;
-};
-
 const estoqueController = {
   // Valor total geral do estoque
   async getValorTotalEstoque(req: Request, res: Response, next: NextFunction) {
@@ -61,30 +55,11 @@ const estoqueController = {
   async movimentarEstoque(req: Request, res: Response, next: NextFunction) {
     try {
       const { codigoProduto, tipo, quantidade, usuario } = req.body;
-
-      const codigoProdutoNum = Number(codigoProduto);
-      const quantidadeNum = Number(quantidade);
-      const tipoNormalizado = String(tipo || '').trim().toUpperCase();
-      const usuarioNormalizado = String(usuario || '').trim();
-
-      if (!Number.isInteger(codigoProdutoNum) || codigoProdutoNum <= 0) {
-        throw badRequest('codigoProduto inválido');
-      }
-      if (!['E', 'S', 'I'].includes(tipoNormalizado)) {
-        throw badRequest('tipo inválido. Use E, S ou I');
-      }
-      if (!Number.isFinite(quantidadeNum) || quantidadeNum < 0) {
-        throw badRequest('quantidade inválida');
-      }
-      if (!usuarioNormalizado) {
-        throw badRequest('usuario é obrigatório');
-      }
-
       const resultado = await estoqueService.registrarMovimentacaoPorCodigo({
-        codigoProduto: codigoProdutoNum,
-        tipo: tipoNormalizado,
-        quantidade: quantidadeNum,
-        usuario: usuarioNormalizado,
+        codigoProduto,
+        tipo,
+        quantidade,
+        usuario,
       });
       res.status(201).json(resultado);
     } catch (err) {
@@ -96,30 +71,11 @@ const estoqueController = {
   async movimentarPorBarcode(req: Request, res: Response, next: NextFunction) {
     try {
       const { codigo_barras, tipo, quantidade, usuario } = req.body;
-
-      const quantidadeNum = Number(quantidade);
-      const tipoNormalizado = String(tipo || '').trim().toUpperCase();
-      const barcodeNormalizado = String(codigo_barras || '').trim();
-      const usuarioNormalizado = String(usuario || '').trim();
-
-      if (!barcodeNormalizado) {
-        throw badRequest('codigo_barras é obrigatório');
-      }
-      if (!['E', 'S', 'I'].includes(tipoNormalizado)) {
-        throw badRequest('tipo inválido. Use E, S ou I');
-      }
-      if (!Number.isFinite(quantidadeNum) || quantidadeNum < 0) {
-        throw badRequest('quantidade inválida');
-      }
-      if (!usuarioNormalizado) {
-        throw badRequest('usuario é obrigatório');
-      }
-
       const resultado = await estoqueService.registrarMovimentacaoPorBarcode({
-        codigo_barras: barcodeNormalizado,
-        tipo: tipoNormalizado,
-        quantidade: quantidadeNum,
-        usuario: usuarioNormalizado,
+        codigo_barras,
+        tipo,
+        quantidade,
+        usuario,
       });
       res.status(201).json(resultado);
     } catch (err) {

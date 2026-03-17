@@ -1,11 +1,5 @@
 import sql from 'mssql';
 
-const notFoundError = (message: string) => {
-  const error = new Error(message) as Error & { status?: number };
-  error.status = 404;
-  return error;
-};
-
 const estoqueService = {
   async getHistoricoPorBarcode(barcode: string) {
     // Buscar o código do produto pelo código de barras
@@ -63,7 +57,7 @@ const estoqueService = {
         SELECT ESTOQUE_ATUAL FROM PRODUTO WHERE CODIGO = ${codigoProduto}
       `;
       if (produto.recordset.length === 0) {
-        throw notFoundError('Produto não encontrado');
+        throw new Error('Produto não encontrado');
       }
       const estoqueAtual = produto.recordset[0].ESTOQUE_ATUAL;
       let novoEstoque = estoqueAtual;
@@ -158,7 +152,7 @@ const estoqueService = {
         SELECT CODIGO, ESTOQUE_ATUAL FROM PRODUTO WHERE CODIGO_BARRAS = ${codigo_barras}
       `;
       if (produto.recordset.length === 0) {
-        throw notFoundError('Produto não encontrado');
+        throw new Error('Produto não encontrado');
       }
       const codigoProduto = produto.recordset[0].CODIGO;
       const estoqueAtual = produto.recordset[0].ESTOQUE_ATUAL;

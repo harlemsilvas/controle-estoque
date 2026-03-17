@@ -37,21 +37,6 @@ const ProdutosTable = ({
             <th
               className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer select-none"
               onClick={() => {
-                if (orderBy === "CODIGO")
-                  setOrderDir(orderDir === "asc" ? "desc" : "asc");
-                else {
-                  setOrderBy("CODIGO");
-                  setOrderDir("asc");
-                }
-              }}
-            >
-              <span className="flex items-center gap-1">
-                Código {renderSortIcon("CODIGO")}
-              </span>
-            </th>
-            <th
-              className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer select-none"
-              onClick={() => {
                 if (orderBy === "DESCRICAO")
                   setOrderDir(orderDir === "asc" ? "desc" : "asc");
                 else {
@@ -66,6 +51,9 @@ const ProdutosTable = ({
             </th>
             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
               Código Interno
+            </th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+              Quantidade
             </th>
             <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
               Ações
@@ -88,9 +76,11 @@ const ProdutosTable = ({
           ) : (
             produtos.map((produto) => (
               <tr key={produto.CODIGO}>
-                <td className="px-4 py-2">{produto.CODIGO}</td>
                 <td className="px-4 py-2">{produto.DESCRICAO}</td>
                 <td className="px-4 py-2">{produto.CODIGO_INTERNO || "-"}</td>
+                <td className="px-4 py-2">
+                  {produto.ESTOQUE_ATUAL ?? produto.quantidade ?? "-"}
+                </td>
                 <td className="px-4 py-2 text-right space-x-2">
                   <button
                     onClick={() => onView(produto.CODIGO)}

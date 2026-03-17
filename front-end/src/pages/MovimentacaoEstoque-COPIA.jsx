@@ -84,18 +84,8 @@ const MovimentacaoEstoque = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const codigoSelecionado = Number(
-        produtoSelecionado?.codigo_interno ||
-          produtoSelecionado?.CODIGO_INTERNO ||
-          produtoSelecionado?.CODIGO,
-      );
-      if (!Number.isFinite(codigoSelecionado) || codigoSelecionado <= 0) {
-        throw new Error("Selecione um produto válido");
-      }
-
       const payload = {
         ...formCodigo,
-        codigoProduto: codigoSelecionado,
         quantidade: Number(formCodigo.quantidade),
       };
       await movimentarEstoquePorCodigo(payload);

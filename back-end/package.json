@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "free-port": "node scripts/free-port.js",
+    "predev": "npm run free-port",
     "dev": "nodemon --watch ./ --ext ts,json --exec \"npm run build && node dist/app.js\"",
+    "prestart": "npm run free-port",
     "build": "tsc",
     "start": "node dist/app.js",
     "test:db": "npm run build && node dist/test-db-connection.js",

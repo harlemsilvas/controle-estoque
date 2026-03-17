@@ -291,34 +291,8 @@ export const buscarProdutos = async (termo) => {
   }
 };
 
-const normalizarCodigoProduto = (codigoProduto) => {
-  const codigoNum = Number(codigoProduto);
-  if (!Number.isInteger(codigoNum) || codigoNum <= 0) return null;
-  return codigoNum;
-};
-
-const obterCodigoProduto = (payload = {}) => {
-  return (
-    payload.codigoProduto ??
-    payload.codigo_interno ??
-    payload.CODIGO_INTERNO ??
-    payload.CODIGO ??
-    payload.produto?.codigo_interno ??
-    payload.produto?.CODIGO_INTERNO ??
-    payload.produto?.CODIGO
-  );
-};
-
 export const registrarMovimentacao = async (data) => {
-  const codigoProduto = normalizarCodigoProduto(obterCodigoProduto(data));
-  if (!codigoProduto) {
-    throw new Error("codigoProduto inválido no front-end");
-  }
-
-  const response = await api.post("/estoque/movimentar", {
-    ...data,
-    codigoProduto,
-  });
+  const response = await api.post("/estoque/movimentar", data);
   return response.data;
 };
 
@@ -424,27 +398,9 @@ export const movimentarEstoquePorCodigo = async ({
   tipo,
   quantidade,
   usuario,
-  produto,
-  CODIGO,
-  CODIGO_INTERNO,
-  codigo_interno,
 }) => {
-  const codigoProdutoNormalizado = normalizarCodigoProduto(
-    obterCodigoProduto({
-      codigoProduto,
-      produto,
-      CODIGO,
-      CODIGO_INTERNO,
-      codigo_interno,
-    })
-  );
-
-  if (!codigoProdutoNormalizado) {
-    throw new Error("codigoProduto inválido no front-end");
-  }
-
   const response = await api.post("/estoque/movimentar", {
-    codigoProduto: codigoProdutoNormalizado,
+    codigoProduto,
     tipo,
     quantidade,
     usuario,
